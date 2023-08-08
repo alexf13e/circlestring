@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="main.js"></script>
+    <script src="StringChain.js"></script>
+    <script src="manualDraw.js"></script>
+    <!-- <script src="autoDraw.js"></script> -->
+
+    <link rel="stylesheet" href="style.css">
+
+    <title>Circle String</title>
+</head>
+<body>
+    <div id="dvMain">
+        <div id="dvUILeftOuter">
+            <p id="pLeftAlign">Previous Strings</p> <!--pain and shame be upon me-->
+            <div id="dvUILeft">
+                <p>Click a peg to start and finish a string. Draw the string around pegs to wrap around them, draw back in the opposite direction to unwrap. Hold shift to disable wrapping</p>
+                <input id="inpStringColour" name="inpStringColour" type="color">
+                <label for="inpStringColour">String colour</label>
+                <div id="dvSettings">
+                    <span>
+                        <select id="slShiftMode" name="slShiftMode">
+                            <option>Hold</option>
+                            <option>Toggle</option>
+                        </select>
+                        <label for="slShiftMode">shift to enable/disable wrapping</label>
+                    </span>
+                    <span>
+                        <input id="inpAutoEditWrap" name="inpAutoEditWrap" type="checkbox" checked>
+                        <label for="inpAutoEditWrap">Auto-disable wrapping on edit start</label>
+                    </span>
+                </div>
+                <p><a target="_blank" href="https://icons8.com/icon/86374/edit">Edit</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a><br>
+                    <a target="_blank" href="https://icons8.com/icon/14367/waste">Bin</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a></p>
+            </div>
+        </div>
+        <canvas id="cnvMain"></canvas>
+        <div id="dvUIRight">
+            <p id="pPrevStringTitle">Previous Strings</p>
+            <div id="dvStringChainList"></div>
+        </div>
+        <!-- <canvas id="cnvHidden"></canvas> -->
+    </div>
+</body>
+</html>

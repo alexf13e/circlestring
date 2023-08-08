@@ -1,0 +1,101 @@
+
+body
+{
+    margin: 0;
+    padding: 8px;
+    width: calc(100vw - 16px);
+    height: calc(100vh - 16px);
+}
+
+input[type="color"]
+{
+    width: 30px;
+    height: 30px;
+}
+
+.stringListContainer
+{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    width: 100px;
+    margin-bottom: 5px;
+    margin: auto;
+}
+
+.stringButton
+{
+    width: 30px;
+    height: 30px;
+    background-size: contain;
+    border-radius: 5px;
+}
+
+.stringButtonEdit
+{
+    background-image: url("icons8-edit-48.png");
+}
+
+.stringButtonDelete
+{
+    background-image: url("icons8-bin-32.png");
+}
+
+#dvMain
+{
+    display: grid;
+    grid-template-columns: 1fr 70% 1fr;
+    height: 100%;
+}
+
+#cnvMain
+{
+    height: min(100%, 50vw);
+    margin: auto;
+    box-shadow: lightgray 0 0 5px 5px;
+}
+
+#dvUILeft
+{
+    height: fit-content;
+    padding: 5%;
+    box-shadow: lightgray 0 0 5px 5px inset;
+}
+
+#dvUILeft > p
+{
+    margin-top: 0;
+}
+
+#dvUIRight
+{
+    display: grid;
+    grid-template-rows: auto 1fr;
+    overflow: auto;
+    margin-bottom: 20%;
+}
+
+#dvSettings
+{
+    display: grid;
+    grid-template-rows: 1fr;
+    margin: 10px 0 10px 0;
+}
+
+#dvStringChainList
+{
+    overflow: auto;
+    box-shadow: lightgray 0 0 5px 5px inset;
+    padding: 5%;
+}
+
+#pLeftAlign
+{
+    color: rgba(0,0,0,0);
+    pointer-events: none;
+    user-select: none;
+}
+
+#pPrevStringTitle
+{
+    text-align: center;
+}
