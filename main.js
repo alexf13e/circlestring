@@ -125,7 +125,7 @@ function addStringChainDiv(stringChain)
     
     let colour = stringChains[currentStringChainIndex].colour.split(",");
     inpColour.type = "color";
-    inpColour.value = "#" + parseInt(colour[0]).toString(16) + parseInt(colour[1]).toString(16) + parseInt(colour[2]).toString(16);
+    inpColour.value = "#" + parseInt(colour[0]).toString(16).padStart(2, "0") + parseInt(colour[1]).toString(16).padStart(2, "0") + parseInt(colour[2]).toString(16).padStart(2, "0");
     
     btnEdit.classList.add("stringButton");
     btnEdit.classList.add("stringButtonEdit")
