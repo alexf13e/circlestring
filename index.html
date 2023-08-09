@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <script src="main.js"></script>
     <script src="StringChain.js"></script>
+    <script src="StringBoard.js"></script>
     <script src="manualDraw.js"></script>
+    <script src="UI.js"></script>
     <!-- <script src="autoDraw.js"></script> -->
 
     <link rel="stylesheet" href="style.css">
@@ -30,6 +32,15 @@
                     <span>
                         <input id="inpAutoEditWrap" name="inpAutoEditWrap" type="checkbox" checked>
                         <label for="inpAutoEditWrap">Auto-disable wrapping on edit start</label>
+                    </span>
+                    <span>
+                        <input id="inpNumPegs" name="inpNumPegs" type="number" value="64" min="2" max="512">
+                        <label for="inpNumPegs">Number of pegs (requires reset)</label>
+                    </span>
+                    <span>
+                        <button id="btnResetBoard">Reset</button>
+                        <button id="btnSaveBoard">Save</button>
+                        <button id="btnLoadBoard">Load</button>
                     </span>
                 </div>
                 <p><a target="_blank" href="https://icons8.com/icon/86374/edit">Edit</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a><br>

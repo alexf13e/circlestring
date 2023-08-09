@@ -88,6 +88,11 @@ input[type="color"]
     padding: 5%;
 }
 
+#inpNumPegs
+{
+    width: 40px;
+}
+
 #pLeftAlign
 {
     color: rgba(0,0,0,0);

@@ -48,14 +48,14 @@ class StringChain
         setStringStyle(this.colour, stringOpacity);
 
         let pi = this.pegWraps[0].pegIndex;
-        let pp = getPegPos(pi);
+        let pp = board.getPegPos(pi);
 
         context.beginPath();
         context.moveTo(pp.x, pp.y);
         for (let i = 1; i < this.pegWraps.length; i++)
         {
             pi = this.pegWraps[i].pegIndex;
-            pp = getPegPos(pi);
+            pp = board.getPegPos(pi);
             ctxMain.lineTo(pp.x, pp.y);
         }
 
