@@ -34,7 +34,7 @@ window.addEventListener("mouseup", () => {
             stringActive = false;
             editing = false;
             enableUI()
-            draw();
+            requestDraw = true;
         }
         else
         {
@@ -48,6 +48,7 @@ window.addEventListener("mouseup", () => {
 });
 
 window.addEventListener("mousemove", (e) => {
+
     prevMousePos = { x: currentMousePos.x, y: currentMousePos.y };
 
     let canvasBounds = cnvMain.getBoundingClientRect();
@@ -68,9 +69,8 @@ window.addEventListener("mousemove", (e) => {
 
     if (stringActive)
     {
-        checkPegWrap();
-        checkPegUnwrap();
-        draw();
+        if (enableWrap) board.resolveWraps(prevMousePos, currentMousePos);
+        requestDraw = true;
     }
 });
 
@@ -78,7 +78,7 @@ window.addEventListener("keydown", (e) => {
     if (e.key === "Shift")
     {
         if (slShiftMode.value === "Hold") enableWrap = false;
-        draw();
+        requestDraw = true;
     }
 });
 
@@ -87,79 +87,26 @@ window.addEventListener("keyup", (e) => {
     {
         if (slShiftMode.value === "Hold") enableWrap = true;
         else enableWrap = !enableWrap;
-        draw();
+        requestDraw = true;
+    }
+    if (e.key == "f")
+    {
+        let csc = board.getCurrentStringChain();
+        if (csc)
+        {
+            if (csc.getLength() > 1) csc.pop();
+            else
+            {
+                board.deleteStringChain(csc);
+                stringActive = false;
+                editing = false;
+                enableUI()
+            }
+            requestDraw = true;
+        }
+        
     }
 });
-
-function checkPegWrap()
-{
-    if (!(stringActive && enableWrap)) return;
-
-    //cannot wrap a peg if moving completely within the circle
-    if (mouseStayedWithinBoardRadius()) return;
-    
-    let currentStringChain = board.getCurrentStringChain();
-    let startPegIndex = currentStringChain.getLastPegIndex();
-    
-    let startPegPos = board.getPegPos(startPegIndex);
-
-    //is string currently clockwise or anticlockwise from the previous peg?
-    //inverted y when drawing, so increase theta is clockwise
-    let thetaPeg = startPegIndex / board.numPegs * TWO_PI;
-    let thetaString = Math.atan2(currentMousePos.y, currentMousePos.x);
-    if (thetaString < 0) thetaString += TWO_PI;
-
-    let stringClockwiseFromPeg = (thetaString > thetaPeg);
-    if (Math.abs(thetaString - thetaPeg) > Math.PI) stringClockwiseFromPeg = !stringClockwiseFromPeg;
-
-    //is the string moving away from or towards the start peg?
-    let thetaPrevString = Math.atan2(prevMousePos.y, prevMousePos.x);
-    if (thetaPrevString < 0) thetaPrevString += TWO_PI;
-    let stringMovingClockwise = (thetaString > thetaPrevString);
-    if (Math.abs(thetaString - thetaPrevString) > Math.PI) stringMovingClockwise = !stringMovingClockwise;
-
-    let movingAwayFromPeg = (stringClockwiseFromPeg == stringMovingClockwise);
-
-    let offset = (stringClockwiseFromPeg == movingAwayFromPeg ? 1 : -1);
-    let iStart = (movingAwayFromPeg ? 1 : Math.ceil(board.numPegs / 2));
-
-    for (let i = iStart; i < board.numPegs; i++)
-    {   
-        let iPeg = startPegIndex + i * offset;
-        if (iPeg < 0) iPeg += board.numPegs;
-        if (iPeg >= board.numPegs) iPeg -= board.numPegs;
-        let pPeg = board.getPegPos(iPeg);
-        
-        let wrapData = isPointInTriangle(startPegPos, prevMousePos, currentMousePos, pPeg);
-        if (wrapData.isWrapped)
-        {
-            //peg has been wrapped
-            currentStringChain.push(iPeg, wrapData.isClockwise);
-        }
-    }
-}
-
-function checkPegUnwrap()
-{
-    if (!(stringActive && enableWrap)) return;
-
-    let currentStringChain = board.getCurrentStringChain();
-    if (currentStringChain.getLength() < 2) return;
-
-    while (currentStringChain.getLength() > 1)
-    {
-        let startPegPos = board.getPegPos(currentStringChain.getSecondLastPegIndex());
-        let pPeg = board.getPegPos(currentStringChain.getLastPegIndex());
-    
-        let wrapData = isPointInTriangle(startPegPos, prevMousePos, currentMousePos, pPeg);
-    
-        if (wrapData.isWrapped && (wrapData.isClockwise != currentStringChain.getLastPegDirection()))
-        {
-            currentStringChain.pop();
-        }
-        else return;
-    }
-}
 
 function signedTriangleArea(baseStart, baseEnd, peak)
 {

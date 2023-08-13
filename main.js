@@ -11,6 +11,7 @@ let currentColour = "0, 0, 0";
 let currentOpacity = stringOpacity;
 
 let board;
+let requestDraw;
 
 window.addEventListener("load", init);
 
@@ -24,29 +25,37 @@ function init()
     
     initUI();
 
-    draw();
+    requestDraw = true;
+    requestAnimationFrame(draw);
 }
 
 function draw()
 {
-    ctxMain.clearRect(-centreOffset.x, -centreOffset.y, IMG_WIDTH, IMG_HEIGHT);
-
-    //draw board's pegs and strings
-    board.draw(ctxMain);
-
-    //draw current string to mouse
-    if (stringActive)
+    if (requestDraw)
     {
-        let csc = board.getCurrentStringChain();
-        let p = board.getPegPos(csc.getLastPegIndex());
-        ctxMain.beginPath();
-        ctxMain.moveTo(p.x, p.y);
-        ctxMain.lineTo(currentMousePos.x, currentMousePos.y);
+        ctxMain.clearRect(-centreOffset.x, -centreOffset.y, IMG_WIDTH, IMG_HEIGHT);
 
-        if (editing) setStringStyle(csc.colour, (enableWrap ? stringOpacity : stringOpacityNoWrap));
-        else setStringStyle(currentColour, (enableWrap ? stringOpacity : stringOpacityNoWrap));
-        ctxMain.stroke();
+        //draw board's pegs and strings
+        board.draw(ctxMain);
+
+        //draw current string to mouse
+        if (stringActive)
+        {
+            let csc = board.getCurrentStringChain();
+            let p = board.getPegPos(csc.getLastPegIndex());
+            ctxMain.beginPath();
+            ctxMain.moveTo(p.x, p.y);
+            ctxMain.lineTo(currentMousePos.x, currentMousePos.y);
+
+            if (editing) setStringStyle(csc.colour, (enableWrap ? stringOpacity : stringOpacityNoWrap));
+            else setStringStyle(currentColour, (enableWrap ? stringOpacity : stringOpacityNoWrap));
+            ctxMain.stroke();
+        }
+
+        requestDraw = false;
     }
+
+    requestAnimationFrame(draw);
 }
 
 function setStringStyle(colour, opacity)

@@ -47,7 +47,7 @@ function initUI()
     btnResetBoard.addEventListener("click", () => {
         board.reset(inpNumPegs.value);
         dvStringChainList.replaceChildren();
-        draw();
+        requestDraw = true;
     });
 
     btnSaveBoard = document.getElementById("btnSaveBoard");
@@ -81,7 +81,7 @@ function addStringChainDiv(stringChain)
 
     inpColour.addEventListener("change", (e) => {
         e.currentTarget.parentElement.stringChain.colour = colourInputToRGB(e.currentTarget.value);
-        draw();
+        requestDraw = true;
     });
 
     btnEdit.addEventListener("click", (e) => {
@@ -96,7 +96,7 @@ function addStringChainDiv(stringChain)
     btnDelete.addEventListener("click", (e) => {
         board.deleteStringChain(e.currentTarget.parentElement.stringChain);
         dvStringChainList.removeChild(e.currentTarget.parentElement);
-        draw();
+        requestDraw = true;
     });
 
     dvContainer.appendChild(inpColour);
@@ -110,8 +110,8 @@ function enableUI()
 {
     inpStringColour.disabled = false;
     btnResetBoard.disabled = false;
-    btnSaveBoard.disabled = false;
-    btnLoadBoard.disabled = false;
+    // btnSaveBoard.disabled = false;
+    // btnLoadBoard.disabled = false;
 
     for (let container of dvStringChainList.children)
     {
@@ -129,8 +129,8 @@ function disableUI()
 {
     inpStringColour.disabled = true;
     btnResetBoard.disabled = true;
-    btnSaveBoard.disabled = true;
-    btnLoadBoard.disabled = true;
+    // btnSaveBoard.disabled = true;
+    // btnLoadBoard.disabled = true;
 
     for (let container of dvStringChainList.children)
     {

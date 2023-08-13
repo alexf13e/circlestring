@@ -13,7 +13,7 @@ class StringChain
 
     pop()
     {
-        this.pegWraps.pop();
+        if (this.pegWraps.length > 0) return this.pegWraps.pop();
     }
 
     getFirstPegIndex()
@@ -39,6 +39,16 @@ class StringChain
     getLength()
     {
         return this.pegWraps.length;
+    }
+
+    getPegWrapsCopy()
+    {
+        return [...this.pegWraps];
+    }
+
+    unwrap(pegWrap)
+    {
+        this.pegWraps.splice(this.pegWraps.indexOf(pegWrap), 1);
     }
 
     draw(context)
