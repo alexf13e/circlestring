@@ -39,13 +39,13 @@ function initUI()
 
     inpNumPegs = document.getElementById("inpNumPegs");
     inpNumPegs.addEventListener("change", () => {
-        if (parseInt(inpNumPegs.value) < parseInt(inpNumPegs.min)) inpNumPegs.value = inpNumPegs.min;
+        if (parseInt(inpNumPegs.value) < parseInt(inpNumPegs.min) || inpNumPegs.value == "") inpNumPegs.value = inpNumPegs.min;
         if (parseInt(inpNumPegs.value) > parseInt(inpNumPegs.max)) inpNumPegs.value = inpNumPegs.max;
     });
 
     btnResetBoard = document.getElementById("btnResetBoard");
     btnResetBoard.addEventListener("click", () => {
-        board.reset(inpNumPegs.value);
+        board.reset(parseInt(inpNumPegs.value));
         dvStringChainList.replaceChildren();
         requestDraw = true;
     });

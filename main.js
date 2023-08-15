@@ -18,8 +18,8 @@ window.addEventListener("load", init);
 function init()
 {
     centreOffset = { x: IMG_WIDTH / 2, y: IMG_HEIGHT / 2 };
-    currentMousePos = { x: 0, y: 0 };
-    prevMousePos = currentMousePos;
+    currentMousePos = new Vec2(0, 0);
+    prevMousePos = new Vec2(0, 0);
 
     board = new StringBoard(IMG_WIDTH / 2.5, 64, 2);
     

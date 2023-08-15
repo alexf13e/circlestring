@@ -31,7 +31,7 @@ class StringChain
         return this.pegWraps[this.pegWraps.length - 2].pegIndex;
     }
 
-    getLastPegDirection()
+    getLastPegIsClockwise()
     {
         return this.pegWraps[this.pegWraps.length - 1].isClockwise;
     }

@@ -6,14 +6,15 @@ let enableWrap = true;
 
 window.addEventListener("mouseup", () => {
     //if close enough to a peg, set that as the starting one
-    let nearestPegData = board.getNearestPeg(currentMousePos);
+    let nearestPegIndex = board.getNearestPegIndex(currentMousePos);
+    let nearestPegPos = board.getPegPos(nearestPegIndex);
     let currentStringChain = board.getCurrentStringChain();
 
-    if (isMouseHoveringPeg(nearestPegData))
+    if (isMouseHoveringPeg(nearestPegPos))
     {
         if (stringActive)
         {
-            if (nearestPegData.index === currentStringChain.getFirstPegIndex() && currentStringChain.getLength() === 1)
+            if (nearestPegIndex === currentStringChain.getFirstPegIndex() && currentStringChain.getLength() === 1)
             {
                 //unwrapped from all pegs, remove the chain
                 board.popStringChain();
@@ -21,9 +22,9 @@ window.addEventListener("mouseup", () => {
             else
             {
                 //finish the string here
-                if (currentStringChain.getLastPegIndex() != nearestPegData.index)
+                if (currentStringChain.getLastPegIndex() != nearestPegIndex)
                 {
-                    currentStringChain.push(nearestPegData.index, true);
+                    currentStringChain.push(nearestPegIndex, true);
                 }
                 
                 if (!editing) addStringChainDiv(currentStringChain);
@@ -39,7 +40,7 @@ window.addEventListener("mouseup", () => {
         else
         {
             //begin string chain
-            board.newStringChain(nearestPegData.index, currentColour);
+            board.newStringChain(nearestPegIndex, currentColour);
             stringActive = true;
             cnvMain.style.cursor = "crosshair";
             disableUI();
@@ -49,15 +50,16 @@ window.addEventListener("mouseup", () => {
 
 window.addEventListener("mousemove", (e) => {
 
-    prevMousePos = { x: currentMousePos.x, y: currentMousePos.y };
+    prevMousePos.set(currentMousePos);
 
     let canvasBounds = cnvMain.getBoundingClientRect();
     let canvasPixelsPerScreenPixel = { x: IMG_WIDTH / canvasBounds.width, y: IMG_HEIGHT / canvasBounds.height };
     currentMousePos.x = (e.x - canvasBounds.x) * canvasPixelsPerScreenPixel.x - centreOffset.x;
     currentMousePos.y = (e.y - canvasBounds.y) * canvasPixelsPerScreenPixel.y - centreOffset.y;
-    let nearestPegData = board.getNearestPeg(currentMousePos);
+    let nearestPegIndex = board.getNearestPegIndex(currentMousePos);
+    let nearestPegPos = board.getPegPos(nearestPegIndex);
 
-    if (isMouseHoveringPeg(nearestPegData))
+    if (isMouseHoveringPeg(nearestPegPos))
     {
         cnvMain.style.cursor = "pointer";
     }
@@ -110,10 +112,10 @@ window.addEventListener("keyup", (e) => {
 
 function signedTriangleArea(baseStart, baseEnd, peak)
 {
-    let AB = { x: baseEnd.x - baseStart.x, y: baseEnd.y - baseStart.y };
-    let AC = { x: peak.x - baseStart.x, y: peak.y - baseStart.y };
+    let AB = new Vec2(baseEnd.x - baseStart.x, baseEnd.y - baseStart.y);
+    let AC = new Vec2(peak.x - baseStart.x, peak.y - baseStart.y);
 
-    let area = AB.x * AC.y - AB.y * AC.x;
+    let area = AB.cross(AC);
     return area;
 }
 
@@ -130,10 +132,10 @@ function isPointInTriangle(t1, t2, t3, p)
     return { isWrapped: (s1 === s2 && s1 !== s3), isClockwise: s1 > 0 };
 }
 
-function isMouseHoveringPeg(pegData)
+function isMouseHoveringPeg(pegPos)
 {
-    return (pegData.x - currentMousePos.x) * (pegData.x - currentMousePos.x) +
-           (pegData.y - currentMousePos.y) * (pegData.y - currentMousePos.y) < board.pegRadius * board.pegRadius + 100; //bit of extra room for clicking
+    return (pegPos.x - currentMousePos.x) * (pegPos.x - currentMousePos.x) +
+           (pegPos.y - currentMousePos.y) * (pegPos.y - currentMousePos.y) < board.pegRadius * board.pegRadius + 100; //bit of extra room for clicking
 }
 
 function mouseStayedWithinBoardRadius()

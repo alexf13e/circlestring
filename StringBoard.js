@@ -8,6 +8,7 @@ class StringBoard
         this.pegRadius = pegRadius;
         this.stringChains = [];
         this.currentStringChainIndex = 0;
+        this.dpThroughCircleThreshold = this.calculateDPThreshold();
     }
 
     reset(numPegs)
@@ -23,10 +24,10 @@ class StringBoard
         let x = this.boardRadius * Math.cos(theta);
         let y = this.boardRadius * Math.sin(theta);
 
-        return { x: x, y: y };
+        return new Vec2(x, y);
     }
 
-    getNearestPeg(pos)
+    getNearestPegIndex(pos)
     {
         let posTheta = Math.atan2(pos.y, pos.x);
         if (posTheta < 0) posTheta += TWO_PI;
@@ -38,21 +39,16 @@ class StringBoard
         let prevPegTheta = prevPegIndex * pegDeltaTheta;
         let nextPegTheta = nextPegIndex * pegDeltaTheta;
 
-        let nearestPegTheta, nearestPegIndex;
         if (posTheta - prevPegTheta < nextPegTheta - posTheta)
         {
             //prev is closer
-            nearestPegTheta = prevPegTheta;
-            nearestPegIndex = prevPegIndex;
+            return prevPegIndex;
         }
         else
         {
             //next is closer
-            nearestPegTheta = nextPegTheta;
-            nearestPegIndex = nextPegIndex;
+            return nextPegIndex;
         }
-
-        return { x: this.boardRadius * Math.cos(nearestPegTheta), y: this.boardRadius * Math.sin(nearestPegTheta), index: nearestPegIndex };
     }
 
     popStringChain()
@@ -94,84 +90,166 @@ class StringBoard
 
     resolveWraps(prevStringEnd, currentStringEnd)
     {
-        let csc = this.getCurrentStringChain();
-        let potentialWraps = this.findPotentialWraps(prevStringEnd, currentStringEnd);
-        let potentialUnwraps = this.findPotentialUnwraps(prevStringEnd, currentStringEnd);
-        let tWraps = [];
-        let tUnwraps = [];
-        let stringStart = this.getPegPos(csc.getLastPegIndex());
+        //there is no logic here, only edge cases. this function has been scrapped and rewritten [4] times
+        //https://www.desmos.com/calculator/65grtq03bm
 
-        //figure out the order wraps and unwraps happened
-        let prevInsideCircle = prevStringEnd.x * prevStringEnd.x + prevStringEnd.y * prevStringEnd.y < this.boardRadius * this.boardRadius;
-        let currentInsideCircle = currentStringEnd.x * currentStringEnd.x + currentStringEnd.y * currentStringEnd.y < this.boardRadius * this.boardRadius;
-        let enteredCircle = (!prevInsideCircle && currentInsideCircle);
+        let csc = this.getCurrentStringChain();
+        let stringStartIndex = csc.getLastPegIndex();
+        let stringStartPos = this.getPegPos(stringStartIndex);
+
+        //is string from previous peg to current peg through circle?
+        let prevPegsThroughCircle = false;
+        if (csc.getLength() > 1)
+        {
+            let prevPegPos = this.getPegPos(csc.getSecondLastPegIndex());
+            let normal = prevPegPos.normalize();
+            let dp = stringStartPos.sub(prevPegPos).normalize().dot(normal);
+
+            if (dp < this.dpThroughCircleThreshold)
+            {
+                //string is going through circle
+                prevPegsThroughCircle = true;
+            }
+        }
+
+        //check if current peg is unwrapped
+        let unwrappedThroughCircleIndex = null;
+        if (prevPegsThroughCircle)
+        {
+            let prevPegPos = this.getPegPos(csc.getSecondLastPegIndex());
+
+            let wrapData = isPointInTriangle(prevPegPos, prevStringEnd, currentStringEnd, stringStartPos);
+            if (wrapData.isWrapped && wrapData.isClockwise != csc.getLastPegIsClockwise())
+            {
+                unwrappedThroughCircleIndex = csc.getLastPegIndex();
+                csc.pop();
+                stringStartIndex = csc.getLastPegIndex();
+                stringStartPos = this.getPegPos(stringStartIndex);
+            }
+        }
+
+
+        //if through to other side of circle of circle, prev to current string end used for direction
+        //else, peg to prev string end used
+        let prevInsideCircle = prevStringEnd.dot(prevStringEnd) < this.boardRadius * this.boardRadius;
+        let currentInsideCircle = currentStringEnd.dot(currentStringEnd) < this.boardRadius * this.boardRadius;
         let exitedCircle = (prevInsideCircle && !currentInsideCircle);
 
-        let deltaP;
-        if (enteredCircle)
-        {
-            //line to check along is from previous attached peg to previous mouse
-            deltaP = { x: prevStringEnd.x - stringStart.x, y: prevStringEnd.y - stringStart.y };
-        }
-        else// if (exitedCircle || !(enteredCircle || exitedCircle))
-        {
-            //line to check along is from prevmouse to currentmouse
-            deltaP = { x: currentStringEnd.x - prevStringEnd.x, y: currentStringEnd.y - prevStringEnd.y };
-        }
+        let stringStartPosNormalised = stringStartPos.normalize();
+        let dp = prevStringEnd.sub(stringStartPos).normalize().dot(stringStartPosNormalised);
+        let stringThroughCircle = (dp < this.dpThroughCircleThreshold);
         
-
-        let lenDeltaP = Math.sqrt(deltaP.x * deltaP.x + deltaP.y * deltaP.y);
-        let normalisedDeltaP = { x: deltaP.x / lenDeltaP, y: deltaP.y / lenDeltaP };
-
-        for (let i = 0; i < potentialWraps.length; i++)
+        let stringDir, stringClockwise;
+        let clockwiseFromStringStart = stringStartPos.normalize().perp();
+        if (stringThroughCircle)
         {
-            tWraps.push({ pwIndex: i, t: this.findWrapTime(normalisedDeltaP, potentialWraps[i].pegIndex) });
-        }
-
-        for (let i = 0; i < potentialUnwraps.length; i++)
-        {
-            tUnwraps.push({ puIndex: i, t: this.findWrapTime(normalisedDeltaP, potentialUnwraps[i].pegIndex) });
-        }
-
-        //sort wraps/unwraps by their time
-        tWraps.sort((a, b) => a.t - b.t);
-        tUnwraps.sort((a, b) => a.t - b.t);
-
-        //do unwraps which were before the first wrap
-        for (let i = 0; i < potentialUnwraps.length; i++)
-        {
-            if (tWraps.length > 0 && tUnwraps[i].t > tWraps[0].t) break;
-
-            csc.unwrap(potentialUnwraps[i]);
-        }
-
-        //do wraps
-        if (exitedCircle && potentialWraps.length > 0)
-        {
-            //want furthest from start
-            let index = tWraps[tWraps.length - 1].pwIndex;
-            csc.push(potentialWraps[index].pegIndex, potentialWraps[index].isClockwise);
+            stringDir = currentStringEnd.sub(prevStringEnd).normalize();
+            stringClockwise = (stringDir.dot(clockwiseFromStringStart) < 0);
         }
         else
         {
+            stringDir = prevStringEnd.sub(stringStartPos).normalize();
+            stringClockwise = (stringDir.dot(clockwiseFromStringStart) > 0);
+        }
 
+
+        let potentialWraps = this.findPotentialWraps(prevStringEnd, currentStringEnd);
+        let tWraps = [];
+        for (let i = 0; i < potentialWraps.length; i++)
+        {
+            tWraps.push({ pwIndex: i, t: this.findWrapTime(stringClockwise, stringStartIndex, potentialWraps[i].pegIndex) });
+        }
+
+        tWraps.sort((a, b) => a.t - b.t);
+
+
+        //if didnt unwrap through circle, check for potential multiple unwraps
+        let potentialUnwraps;
+        let tUnwraps = [];
+        if (unwrappedThroughCircleIndex == null)
+        {
+            potentialUnwraps = this.findPotentialUnwraps(prevStringEnd, currentStringEnd);
+
+            for (let i = 0; i < potentialUnwraps.length; i++)
+            {
+                tUnwraps.push({ puIndex: i, t: this.findWrapTime(stringClockwise, stringStartIndex, potentialUnwraps[i].pegIndex) });
+            }
+    
+            tUnwraps.sort((a, b) => a.t - b.t);
+    
+            //do unwraps which were before the first wrap
+            for (let i = 0; i < potentialUnwraps.length; i++)
+            {
+                if (exitedCircle)
+                {
+                    if (tWraps.length > 0 && tUnwraps[i].t < tWraps[0].t) break;
+                }
+                else
+                {
+                    if (tWraps.length > 0 && tUnwraps[i].t > tWraps[0].t) break;
+                }
+                csc.unwrap(potentialUnwraps[i]);
+            }
+        }
+
+
+        let tUnwrappedThroughCircle = null;
+        if (unwrappedThroughCircleIndex != null)
+        {
+            tUnwrappedThroughCircle = this.findWrapTime(stringClockwise, stringStartIndex, unwrappedThroughCircleIndex);
+        }
+        
+        //do wraps
+        if (exitedCircle && tWraps.length > 1)
+        {
+            for (let i = 0; i < tWraps.length; i++)
+            {
+                let pw = potentialWraps[tWraps[i].pwIndex];
+                if (pw.pegIndex == unwrappedThroughCircleIndex) continue;
+                
+                csc.push(pw.pegIndex, pw.isClockwise);
+                break;
+            }
+        }
+        else
+        {
             for (let i = 0; i < tWraps.length; i++)
             {
                 //check in order of times if the line change between previous mouse, current mouse and previous peg would wrap the next peg, stopping the first time it wouldnt
                 let nextPegIndex = potentialWraps[tWraps[i].pwIndex].pegIndex;
+                if (unwrappedThroughCircleIndex != null)
+                {
+                    if (nextPegIndex == unwrappedThroughCircleIndex || tWraps[i].t < tUnwrappedThroughCircle) continue;
+                }
+                
+    
                 let nextPegPos = this.getPegPos(nextPegIndex);
-                let wrapData = isPointInTriangle(stringStart, prevStringEnd, currentStringEnd, nextPegPos);
-
+                let wrapData = isPointInTriangle(stringStartPos, prevStringEnd, currentStringEnd, nextPegPos);
+    
                 if (wrapData.isWrapped)
                 {
                     csc.push(nextPegIndex, wrapData.isClockwise);
-                    stringStart = nextPegPos;
+                    stringStartPos = nextPegPos;
                 }
                 else
                 {
                     break;
                 }
             }
+        }
+    }
+
+    findWrapTime(clockwise, startIndex, pegIndex)
+    {
+        if (clockwise)
+        {
+            if (startIndex > pegIndex) pegIndex += this.numPegs;
+            return pegIndex - startIndex;
+        }
+        else
+        {
+            if (startIndex < pegIndex) startIndex += this.numPegs;
+            return startIndex - pegIndex;
         }
     }
 
@@ -218,12 +296,16 @@ class StringBoard
         return potentialUnwraps;
     }
 
-    findWrapTime(normalisedDeltaP, pegIndex)
+    calculateDPThreshold()
     {
-        let pPeg = this.getPegPos(pegIndex);
-        let t = pPeg.x * normalisedDeltaP.x + pPeg.y * normalisedDeltaP.y;
-
-        return t;
+        //the value below which a line is considered to be crossing through the circle
+        //dot product between [the normal of the circle at peg 0] and [the normalised vector from peg 0 to peg 1]
+        let p0 = this.getPegPos(0);
+        let p1 = this.getPegPos(1);
+        let n0 = p0.normalize();
+        let n10 = p1.sub(p0).normalize();
+        let dot = n0.dot(n10);
+        return dot * 1.01; //floating point precision my beloved
     }
 
     draw(context)
