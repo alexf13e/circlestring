@@ -21,7 +21,7 @@ function init()
     currentMousePos = new Vec2(0, 0);
     prevMousePos = new Vec2(0, 0);
 
-    board = new StringBoard(IMG_WIDTH / 2.5, 64, 2);
+    board = new StringBoard(IMG_WIDTH / 2.5, 64, 3);
     
     initUI();
 
@@ -42,9 +42,10 @@ function draw()
         if (stringActive)
         {
             let csc = board.getCurrentStringChain();
-            let p = board.getPegPos(csc.getLastPegIndex());
+            let startPos = board.calculateWrapEndPoint(csc.getLastPegIndex(), csc.getLastPegIsClockwise(), currentMousePos);
+
             ctxMain.beginPath();
-            ctxMain.moveTo(p.x, p.y);
+            ctxMain.moveTo(startPos.x, startPos.y);
             ctxMain.lineTo(currentMousePos.x, currentMousePos.y);
 
             if (editing) setStringStyle(csc.colour, (enableWrap ? stringOpacity : stringOpacityNoWrap));

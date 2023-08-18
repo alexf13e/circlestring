@@ -1,14 +1,14 @@
 class StringChain
 {
-    constructor(startIndex, colour)
+    constructor(startIndex, startPos, colour)
     {
         this.colour = colour;
-        this.pegWraps = [{ pegIndex: startIndex, isClockwise: true }];
+        this.pegWraps = [{ pegIndex: startIndex, isClockwise: true, wrapStart: null, wrapEnd: startPos }];
     }
 
-    push(pegIndex, isClockwise)
+    push(pegIndex, isClockwise, wrapStart, wrapEnd)
     {
-        this.pegWraps.push({pegIndex: pegIndex, isClockwise: isClockwise});
+        this.pegWraps.push({ pegIndex: pegIndex, isClockwise: isClockwise, wrapStart: wrapStart, wrapEnd: wrapEnd });
     }
 
     pop()
@@ -36,6 +36,16 @@ class StringChain
         return this.pegWraps[this.pegWraps.length - 1].isClockwise;
     }
 
+    getLastPegWrapEnd()
+    {
+        return this.pegWraps[this.pegWraps.length - 1].wrapEnd;
+    }
+
+    setLastPegWrapEnd(wrapEnd)
+    {
+        this.pegWraps[this.pegWraps.length - 1].wrapEnd = wrapEnd;
+    }
+
     getLength()
     {
         return this.pegWraps.length;
@@ -51,22 +61,37 @@ class StringChain
         this.pegWraps.splice(this.pegWraps.indexOf(pegWrap), 1);
     }
 
+    getMostRecentWrapOfPegAndAlsoThePegBeforeItIGuess(index)
+    {
+        for (let i = this.pegWraps.length - 1; i >= 0; i--)
+        {
+            if (this.pegWraps[i].pegIndex == index)
+            {
+                return { toUnwrap: this.pegWraps[i], pegBefore: this.pegWraps[i-1] };
+            }
+        }
+
+        return null;
+    }
+
     draw(context)
     {
         if (this.pegWraps.length < 2) return;
 
         setStringStyle(this.colour, stringOpacity);
 
-        let pi = this.pegWraps[0].pegIndex;
-        let pp = board.getPegPos(pi);
+        let pStart = this.pegWraps[0].wrapEnd;
+        let pEnd;
 
         context.beginPath();
-        context.moveTo(pp.x, pp.y);
         for (let i = 1; i < this.pegWraps.length; i++)
         {
-            pi = this.pegWraps[i].pegIndex;
-            pp = board.getPegPos(pi);
-            ctxMain.lineTo(pp.x, pp.y);
+            ctxMain.moveTo(pStart.x, pStart.y)
+
+            pEnd = this.pegWraps[i].wrapStart;
+            ctxMain.lineTo(pEnd.x, pEnd.y);
+
+            pStart = this.pegWraps[i].wrapEnd;
         }
 
         context.stroke();

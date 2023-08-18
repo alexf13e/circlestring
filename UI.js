@@ -4,9 +4,16 @@ let cnvMain, ctxMain;
 let inpStringColour, inpAutoEditWrap;
 let slShiftMode;
 let inpNumPegs;
-let btnResetBoard, btnSaveBoard, btnLoadBoard;
+let btnRequestReset, btnSaveBoard, btnLoadBoard;
 
 let dvStringChainList;
+let editingListItem = null;
+
+let dvPopupBackground;
+let dvSavePopup, btnCopyToClipboard, aSaveAsFile, btnCloseSavePopup;
+let dvLoadPopup, inpLoadFile, taLoad, btnLoad, btnCloseLoadPopup;
+let dvConfirmResetPopup, btnResetBoard, btnCloseResetPopup;
+
 
 function initUI()
 {
@@ -42,21 +49,115 @@ function initUI()
         if (parseInt(inpNumPegs.value) < parseInt(inpNumPegs.min) || inpNumPegs.value == "") inpNumPegs.value = inpNumPegs.min;
         if (parseInt(inpNumPegs.value) > parseInt(inpNumPegs.max)) inpNumPegs.value = inpNumPegs.max;
     });
+    inpNumPegs.value = 64;
+
+
+    btnSaveBoard = document.getElementById("btnSaveBoard");
+    btnSaveBoard.addEventListener("click", showSavePopup);
+    
+
+    btnLoadBoard = document.getElementById("btnLoadBoard");
+    btnLoadBoard.addEventListener("click", showLoadPopup);
+
+    dvStringChainList = document.getElementById("dvStringChainList");
+
+
+    dvPopupBackground = document.getElementById("dvPopupBackground");
+    dvPopupBackground.addEventListener("click", (e) => {
+        hidePopups();
+    });
+
+    dvSavePopup = document.getElementById("dvSavePopup");
+    dvSavePopup.addEventListener("click", (e) => {
+        e.stopPropagation();
+    });
+
+    btnCopyToClipboard = document.getElementById("btnCopyToClipboard");
+    btnCopyToClipboard.addEventListener("click", () => {
+        let data = board.getSaveData();
+        navigator.clipboard.writeText(data);
+        btnCopyToClipboard.textContent = "Copied";
+    });
+
+    aSaveAsFile = document.getElementById("aSaveAsFile");
+
+    btnCloseSavePopup = document.getElementById("btnCloseSavePopup");
+    btnCloseSavePopup.addEventListener("click", hidePopups);
+
+
+    dvLoadPopup = document.getElementById("dvLoadPopup");
+    dvLoadPopup.addEventListener("click", (e) => {
+        e.stopPropagation();
+    });
+
+    inpLoadFile = document.getElementById("inpLoadFile");
+    inpLoadFile.addEventListener("change", () => {
+        //https://stackoverflow.com/questions/750032/reading-file-contents-on-the-client-side-in-javascript-in-various-browsers
+        const file = inpLoadFile.files[0];
+        if (file)
+        {
+            let reader = new FileReader();
+            reader.onload = (e) => taLoad.value = e.target.result;
+            reader.onerror = () => taLoad.value = "Error reading file...";
+            reader.readAsText(file, "UTF-8");
+        }
+    });
+
+    taLoad = document.getElementById("taLoad");
+    taLoad.addEventListener("input", () => {
+        if (taLoad.value.length > 0) taLoad.style.whiteSpace = "pre";
+        else taLoad.style.whiteSpace = "normal";
+    });
+
+    btnCloseLoadPopup = document.getElementById("btnCloseLoadPopup");
+    btnCloseLoadPopup.addEventListener("click", hidePopups);
+
+    btnLoad = document.getElementById("btnLoad");
+    btnLoad.addEventListener("click", () => {
+        //text area not blank, ignore file
+        let data = taLoad.value;
+        if (data == "") return;
+
+        let result = board.loadFromSave(data);
+
+        if (!result.succeeded)
+        {
+            alert(result.error);
+        }
+        else
+        {
+            dvStringChainList.replaceChildren();
+
+            for (let sc of board.stringChains)
+            {
+                addStringChainDiv(sc);
+            }
+
+            requestDraw = true;
+            hidePopups();
+        }
+    });
+
+    dvConfirmResetPopup = document.getElementById("dvConfirmResetPopup");
+    dvConfirmResetPopup.addEventListener("click", (e) => {
+        e.stopPropagation();
+    });
+
+    btnRequestReset = document.getElementById("btnRequestReset");
+    btnRequestReset.addEventListener("click", () => {
+        showResetPopup();
+    });
 
     btnResetBoard = document.getElementById("btnResetBoard");
     btnResetBoard.addEventListener("click", () => {
         board.reset(parseInt(inpNumPegs.value));
         dvStringChainList.replaceChildren();
+        hidePopups();
         requestDraw = true;
     });
 
-    btnSaveBoard = document.getElementById("btnSaveBoard");
-    
-
-    btnLoadBoard = document.getElementById("btnLoadBoard");
-
-
-    dvStringChainList = document.getElementById("dvStringChainList");
+    btnCloseResetPopup = document.getElementById("btnCloseResetPopup");
+    btnCloseResetPopup.addEventListener("click", hidePopups);
 }
 
 function addStringChainDiv(stringChain)
@@ -88,6 +189,7 @@ function addStringChainDiv(stringChain)
         board.setCurrentStringChain(e.currentTarget.parentElement.stringChain);
         stringActive = true;
         editing = true;
+        editingListItem = e.currentTarget.parentElement;
         if (inpAutoEditWrap.checked) enableWrap = false;
         btnEdit.blur();
         disableUI();
@@ -109,9 +211,9 @@ function addStringChainDiv(stringChain)
 function enableUI()
 {
     inpStringColour.disabled = false;
-    btnResetBoard.disabled = false;
-    // btnSaveBoard.disabled = false;
-    // btnLoadBoard.disabled = false;
+    btnRequestReset.disabled = false;
+    btnSaveBoard.disabled = false;
+    btnLoadBoard.disabled = false;
 
     for (let container of dvStringChainList.children)
     {
@@ -128,9 +230,9 @@ function enableUI()
 function disableUI()
 {
     inpStringColour.disabled = true;
-    btnResetBoard.disabled = true;
-    // btnSaveBoard.disabled = true;
-    // btnLoadBoard.disabled = true;
+    btnRequestReset.disabled = true;
+    btnSaveBoard.disabled = true;
+    btnLoadBoard.disabled = true;
 
     for (let container of dvStringChainList.children)
     {
@@ -155,4 +257,34 @@ function colourInputToRGB(value)
     b = parseInt(b, 16);
 
     return "" + r + ", " + g + ", " + b;
+}
+
+function showSavePopup()
+{
+    dvPopupBackground.style.display = "block";
+    dvSavePopup.style.display = "grid";
+    btnCopyToClipboard.textContent = "Copy to Clipboard";
+
+    let data = new Blob([board.getSaveData()], {type: "application/json"});
+    aSaveAsFile.href = window.URL.createObjectURL(data);
+}
+
+function showLoadPopup()
+{
+    dvPopupBackground.style.display = "block";
+    dvLoadPopup.style.display = "grid";
+}
+
+function showResetPopup()
+{
+    dvPopupBackground.style.display = "block";
+    dvConfirmResetPopup.style.display = "grid";
+}
+
+function hidePopups()
+{
+    dvPopupBackground.style.display = "none";
+    dvSavePopup.style.display = "none";
+    dvLoadPopup.style.display = "none";
+    dvConfirmResetPopup.style.display = "none";
 }

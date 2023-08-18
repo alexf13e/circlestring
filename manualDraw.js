@@ -17,14 +17,26 @@ window.addEventListener("mouseup", () => {
             if (nearestPegIndex === currentStringChain.getFirstPegIndex() && currentStringChain.getLength() === 1)
             {
                 //unwrapped from all pegs, remove the chain
-                board.popStringChain();
+                board.deleteStringChain(currentStringChain);
+
+                if (editing)
+                {
+                    //remove this chain from the list of existing chains
+                    dvStringChainList.removeChild(editingListItem);
+                    editingListItem = null;
+                }
+
             }
             else
             {
                 //finish the string here
                 if (currentStringChain.getLastPegIndex() != nearestPegIndex)
                 {
-                    currentStringChain.push(nearestPegIndex, true);
+                    //NEED WRAP START AND END HERE
+                    let wrapStarts = board.calculateWrapStarts(currentStringChain.getLastPegIndex(), currentStringChain.getLastPegIsClockwise(), nearestPegIndex);
+                    let wrapEnd = board.calculateWrapEnd(currentStringChain.getLastPegIndex(), currentStringChain.getLastPegIsClockwise(), nearestPegIndex, true);
+                    currentStringChain.setLastPegWrapEnd(wrapEnd);
+                    currentStringChain.push(nearestPegIndex, true, wrapStarts.clockwise, null); //default to clockwise when clicked
                 }
                 
                 if (!editing) addStringChainDiv(currentStringChain);

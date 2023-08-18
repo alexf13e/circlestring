@@ -17,7 +17,7 @@
 <body>
     <div id="dvMain">
         <div id="dvUILeftOuter">
-            <p id="pLeftAlign">Previous Strings</p> <!--pain and shame be upon me-->
+            <p id="pLeftAlign">Previous Strings</p> <!--shame be upon me-->
             <div id="dvUILeft">
                 <p>Click a peg to start and finish a string. Draw the string around pegs to wrap around them, draw back in the opposite direction to unwrap. Hold shift to disable wrapping</p>
                 <input id="inpStringColour" name="inpStringColour" type="color">
@@ -39,20 +39,49 @@
                         <label for="inpNumPegs">Number of pegs (requires reset)</label>
                     </span>
                     <span>
-                        <button id="btnResetBoard">Reset</button>
-                        <!-- <button id="btnSaveBoard">Save</button>
-                        <button id="btnLoadBoard">Load</button> -->
+                        <br>
+                        <button id="btnSaveBoard">Save</button>
+                        <button id="btnLoadBoard">Load</button>
+                        <button id="btnRequestReset">Reset</button>
                     </span>
                 </div>
-                <p><a target="_blank" href="https://icons8.com/icon/86374/edit">Edit</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a><br>
+                <br>
+                <p id="pCredits"><a target="_blank" href="https://icons8.com/icon/86374/edit">Edit</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a><br>
                     <a target="_blank" href="https://icons8.com/icon/14367/waste">Bin</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a></p>
             </div>
         </div>
+
         <canvas id="cnvMain"></canvas>
+
         <div id="dvUIRight">
             <p id="pPrevStringTitle">Previous Strings</p>
             <div id="dvStringChainList"></div>
         </div>
+
+        <div id="dvPopupBackground">
+            <div id="dvSavePopup" class="popup">
+                <a id="aSaveAsFile" download="board.json">Save as file</a>
+                <button id="btnCopyToClipboard">Copy to Clipboard</button>
+                <button id="btnCloseSavePopup">Close</button>
+            </div>
+            <div id="dvLoadPopup" class="popup">
+                <input id="inpLoadFile" type="file" accept=".txt,.json">
+                <textarea id="taLoad" rows="10" placeholder="Browse file or paste board data here"></textarea>
+                <span>
+                    <button id="btnCloseLoadPopup">Cancel</button>
+                    <button id="btnLoad">Load</button>
+                </span>
+            </div>
+            <div id="dvConfirmResetPopup" class="popup">
+                <p>All unsaved changes will be lost</p>
+                <br>
+                <span>
+                    <button id="btnCloseResetPopup">Cancel</button>
+                    <button id="btnResetBoard">Reset</button>
+                </span>
+            </div>
+        </div>
+
         <!-- <canvas id="cnvHidden"></canvas> -->
     </div>
 </body>
