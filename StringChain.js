@@ -26,19 +26,19 @@ class StringChain
         return this.pegWraps[this.pegWraps.length - 1].pegIndex;
     }
 
-    getSecondLastPegIndex()
-    {
-        return this.pegWraps[this.pegWraps.length - 2].pegIndex;
-    }
-
     getLastPegIsClockwise()
     {
         return this.pegWraps[this.pegWraps.length - 1].isClockwise;
     }
 
-    getLastPegWrapEnd()
+    getLastPegWrapStart()
     {
-        return this.pegWraps[this.pegWraps.length - 1].wrapEnd;
+        return this.pegWraps[this.pegWraps.length - 1].wrapStart;
+    }
+
+    getSecondLastPegWrapEnd()
+    {
+        return this.pegWraps[this.pegWraps.length - 2].wrapEnd;
     }
 
     setLastPegWrapEnd(wrapEnd)
@@ -51,29 +51,6 @@ class StringChain
         return this.pegWraps.length;
     }
 
-    getPegWrapsCopy()
-    {
-        return [...this.pegWraps];
-    }
-
-    unwrap(pegWrap)
-    {
-        this.pegWraps.splice(this.pegWraps.indexOf(pegWrap), 1);
-    }
-
-    getMostRecentWrapOfPegAndAlsoThePegBeforeItIGuess(index)
-    {
-        for (let i = this.pegWraps.length - 1; i >= 0; i--)
-        {
-            if (this.pegWraps[i].pegIndex == index)
-            {
-                return { toUnwrap: this.pegWraps[i], pegBefore: this.pegWraps[i-1] };
-            }
-        }
-
-        return null;
-    }
-
     draw(context)
     {
         if (this.pegWraps.length < 2) return;
@@ -83,17 +60,18 @@ class StringChain
         let pStart = this.pegWraps[0].wrapEnd;
         let pEnd;
 
-        context.beginPath();
         for (let i = 1; i < this.pegWraps.length; i++)
         {
+            //for some reason, the drawn positions noticably budge when wrapping a new string when all being drawn on the same path...
+            context.beginPath();
             ctxMain.moveTo(pStart.x, pStart.y)
 
             pEnd = this.pegWraps[i].wrapStart;
             ctxMain.lineTo(pEnd.x, pEnd.y);
+            context.stroke();
 
             pStart = this.pegWraps[i].wrapEnd;
         }
 
-        context.stroke();
     }
 }

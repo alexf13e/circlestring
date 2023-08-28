@@ -1,9 +1,13 @@
 
 let cnvMain, ctxMain;
+let canvasRes;
+let canvasCentreOffset;
 
 let inpStringColour, inpAutoEditWrap;
 let slShiftMode;
 let inpNumPegs;
+let inpCanvasResolution, inpBoardPegRadius;
+let btnApplyVisualSettings;
 let btnRequestReset, btnSaveBoard, btnLoadBoard;
 
 let dvStringChainList;
@@ -14,16 +18,13 @@ let dvSavePopup, btnCopyToClipboard, aSaveAsFile, btnCloseSavePopup;
 let dvLoadPopup, inpLoadFile, taLoad, btnLoad, btnCloseLoadPopup;
 let dvConfirmResetPopup, btnResetBoard, btnCloseResetPopup;
 
+const DEFAULT_NUMPEGS = 64;
+const DEFAULT_CANVASRES = 1024;
+const DEFAULT_PEGRADIUS = 3;
+
 
 function initUI()
 {
-    cnvMain = document.getElementById("cnvMain");
-    ctxMain = cnvMain.getContext("2d");
-    cnvMain.width = IMG_WIDTH;
-    cnvMain.height = IMG_HEIGHT;
-    ctxMain.translate(centreOffset.x, centreOffset.y);
-    setStringStyle(currentColour, stringOpacity);
-
     inpStringColour = document.getElementById("inpStringColour");
     inpStringColour.value = "#000000";
     inpStringColour.addEventListener("change", () => {
@@ -46,10 +47,46 @@ function initUI()
 
     inpNumPegs = document.getElementById("inpNumPegs");
     inpNumPegs.addEventListener("change", () => {
-        if (parseInt(inpNumPegs.value) < parseInt(inpNumPegs.min) || inpNumPegs.value == "") inpNumPegs.value = inpNumPegs.min;
-        if (parseInt(inpNumPegs.value) > parseInt(inpNumPegs.max)) inpNumPegs.value = inpNumPegs.max;
+        constrainNumberInput(inpNumPegs);
     });
-    inpNumPegs.value = 64;
+    inpNumPegs.value = DEFAULT_NUMPEGS;
+
+
+    inpCanvasResolution = document.getElementById("inpCanvasResolution");
+    inpCanvasResolution.addEventListener("change", () => {
+        constrainNumberInput(inpCanvasResolution);
+    });
+    inpCanvasResolution.value = DEFAULT_CANVASRES;
+    canvasRes = DEFAULT_CANVASRES;
+
+    inpBoardPegRadius = document.getElementById("inpBoardPegRadius");
+    inpBoardPegRadius.addEventListener("change", () => {
+        constrainNumberInput(inpBoardPegRadius);
+    });
+    inpBoardPegRadius.value = DEFAULT_PEGRADIUS;
+
+    btnApplyVisualSettings = document.getElementById("btnApplyVisualSettings");
+    btnApplyVisualSettings.addEventListener("click", () => {
+        //if no changes, no point in reapplying them
+        if (inpCanvasResolution.value == canvasRes && board.pegRadius == inpBoardPegRadius.value) return;
+
+        canvasRes = parseInt(inpCanvasResolution.value);
+        let numPegs = board.numPegs; //cant change numpegs here, requires reset, so keep same as before
+        let pegRadius = parseInt(inpBoardPegRadius.value);
+
+        cnvMain.width = canvasRes;
+        cnvMain.height = canvasRes;
+        canvasCentreOffset.x = canvasRes / 2;
+        canvasCentreOffset.y = canvasRes / 2;
+        ctxMain.translate(canvasCentreOffset.x, canvasCentreOffset.y);
+        
+        //need to recalculate tangent points for new board settings, easiest to save and reload the board
+        let boardData = board.getSaveData();
+        board = new StringBoard(canvasRes / 2.5, numPegs, pegRadius);
+        board.loadFromSave(boardData);
+
+        requestDraw = true;
+    });
 
 
     btnSaveBoard = document.getElementById("btnSaveBoard");
@@ -158,6 +195,14 @@ function initUI()
 
     btnCloseResetPopup = document.getElementById("btnCloseResetPopup");
     btnCloseResetPopup.addEventListener("click", hidePopups);
+
+    cnvMain = document.getElementById("cnvMain");
+    ctxMain = cnvMain.getContext("2d");
+    cnvMain.width = canvasRes;
+    cnvMain.height = canvasRes;
+    canvasCentreOffset = new Vec2(canvasRes / 2, canvasRes / 2);
+    ctxMain.translate(canvasCentreOffset.x, canvasCentreOffset.y);
+    setStringStyle(currentColour, stringOpacity);
 }
 
 function addStringChainDiv(stringChain)
@@ -208,13 +253,20 @@ function addStringChainDiv(stringChain)
     dvStringChainList.appendChild(dvContainer);
 }
 
+function constrainNumberInput(element)
+{
+    if (parseInt(element.value) < parseInt(element.min) || element.value == "") element.value = element.min;
+    if (parseInt(element.value) > parseInt(element.max)) element.value = element.max;
+}
+
 function enableUI()
 {
     inpStringColour.disabled = false;
-    btnRequestReset.disabled = false;
+    btnApplyVisualSettings.disabled = false;
     btnSaveBoard.disabled = false;
     btnLoadBoard.disabled = false;
-
+    btnRequestReset.disabled = false;
+    
     for (let container of dvStringChainList.children)
     {
         let inpColour = container.children[0]
@@ -230,10 +282,11 @@ function enableUI()
 function disableUI()
 {
     inpStringColour.disabled = true;
-    btnRequestReset.disabled = true;
+    btnApplyVisualSettings.disabled = true;
     btnSaveBoard.disabled = true;
     btnLoadBoard.disabled = true;
-
+    btnRequestReset.disabled = true;
+    
     for (let container of dvStringChainList.children)
     {
         let inpColour = container.children[0]

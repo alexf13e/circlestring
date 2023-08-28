@@ -1,29 +1,36 @@
 
 const TWO_PI = 2 * Math.PI;
-const IMG_WIDTH = 1024;
-const IMG_HEIGHT = 1024;
 
 const stringOpacity = "0.7";
 const stringOpacityNoWrap = "0.2";
 
-let centreOffset;
-let currentColour = "0, 0, 0";
-let currentOpacity = stringOpacity;
+let currentColour;
+let currentOpacity;
 
 let board;
 let requestDraw;
 
 window.addEventListener("load", init);
+window.addEventListener('beforeunload', (e) => {
+    //warn user on leaving page if the board has been drawn on
+    //https://stackoverflow.com/questions/3221161/how-to-pop-up-an-alert-box-when-the-browsers-refresh-button-is-clicked
+    if (board.stringChains.length > 0)
+    {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+  });
 
 function init()
 {
-    centreOffset = { x: IMG_WIDTH / 2, y: IMG_HEIGHT / 2 };
+    currentColour = "0, 0, 0";
+    currentOpacity = stringOpacity;
     currentMousePos = new Vec2(0, 0);
     prevMousePos = new Vec2(0, 0);
 
-    board = new StringBoard(IMG_WIDTH / 2.5, 64, 3);
-    
     initUI();
+
+    board = new StringBoard(canvasRes / 2.5, DEFAULT_NUMPEGS, DEFAULT_PEGRADIUS);
 
     requestDraw = true;
     requestAnimationFrame(draw);
@@ -33,7 +40,7 @@ function draw()
 {
     if (requestDraw)
     {
-        ctxMain.clearRect(-centreOffset.x, -centreOffset.y, IMG_WIDTH, IMG_HEIGHT);
+        ctxMain.clearRect(-canvasCentreOffset.x, -canvasCentreOffset.y, canvasRes, canvasRes);
 
         //draw board's pegs and strings
         board.draw(ctxMain);
@@ -42,7 +49,7 @@ function draw()
         if (stringActive)
         {
             let csc = board.getCurrentStringChain();
-            let startPos = board.calculateWrapEndPoint(csc.getLastPegIndex(), csc.getLastPegIsClockwise(), currentMousePos);
+            let startPos = board.calculateCirclePointTangent(csc.getLastPegIndex(), csc.getLastPegIsClockwise(), currentMousePos);
 
             ctxMain.beginPath();
             ctxMain.moveTo(startPos.x, startPos.y);

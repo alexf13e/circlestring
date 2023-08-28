@@ -17,9 +17,11 @@
 <body>
     <div id="dvMain">
         <div id="dvUILeftOuter">
-            <p id="pLeftAlign">Previous Strings</p> <!--shame be upon me-->
+            <p id="pLeftAlign">Previous Strings</p> <!--shame be upon me, but it was the easiest way to make it pad exactly the same as the other side-->
             <div id="dvUILeft">
-                <p>Click a peg to start and finish a string. Draw the string around pegs to wrap around them, draw back in the opposite direction to unwrap. Hold shift to disable wrapping</p>
+                <p>Click a peg to start and finish a string.<br>
+                    Draw the string around pegs to wrap around them, draw back in the opposite direction or press [z] to unwrap.<br>
+                    Use [shift] to disable wrapping</p>
                 <input id="inpStringColour" name="inpStringColour" type="color">
                 <label for="inpStringColour">String colour</label>
                 <div id="dvSettings">
@@ -35,14 +37,25 @@
                         <label for="inpAutoEditWrap">Auto-disable wrapping on edit start</label>
                     </span>
                     <span>
-                        <input id="inpNumPegs" name="inpNumPegs" type="number" value="64" min="2" max="512">
-                        <label for="inpNumPegs">Number of pegs (requires reset)</label>
+                        <input id="inpNumPegs" class="numberInput" name="inpNumPegs" type="number" min="2" max="512">
+                        <label for="inpNumPegs">Number of pegs (requires clear)</label>
                     </span>
-                    <span>
-                        <br>
+                    <div id="dvBoardVisualSettings">
+                        <span>
+                            <label for="inpCanvasResolution">Board resolution</label>
+                            <input id="inpCanvasResolution" class="numberInput" name="inpCanvasResolution" type="number" min="256">
+                            <label>px</label>
+                        </span>
+                        <span>
+                            <label for="inpBoardPegRadius">Peg size</label>
+                            <input id="inpBoardPegRadius" class="numberInput" name="inpBoardPegRadius" type="number" min="1" max="16">
+                        </span>
+                        <button id="btnApplyVisualSettings">Apply</button>
+                    </div>
+                    <span id="spSaveButtons">
                         <button id="btnSaveBoard">Save</button>
                         <button id="btnLoadBoard">Load</button>
-                        <button id="btnRequestReset">Reset</button>
+                        <button id="btnRequestReset">Clear</button>
                     </span>
                 </div>
                 <br>
@@ -77,7 +90,7 @@
                 <br>
                 <span>
                     <button id="btnCloseResetPopup">Cancel</button>
-                    <button id="btnResetBoard">Reset</button>
+                    <button id="btnResetBoard">Clear</button>
                 </span>
             </div>
         </div>

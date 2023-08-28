@@ -25,14 +25,12 @@ window.addEventListener("mouseup", () => {
                     dvStringChainList.removeChild(editingListItem);
                     editingListItem = null;
                 }
-
             }
             else
             {
                 //finish the string here
                 if (currentStringChain.getLastPegIndex() != nearestPegIndex)
                 {
-                    //NEED WRAP START AND END HERE
                     let wrapStarts = board.calculateWrapStarts(currentStringChain.getLastPegIndex(), currentStringChain.getLastPegIsClockwise(), nearestPegIndex);
                     let wrapEnd = board.calculateWrapEnd(currentStringChain.getLastPegIndex(), currentStringChain.getLastPegIsClockwise(), nearestPegIndex, true);
                     currentStringChain.setLastPegWrapEnd(wrapEnd);
@@ -54,9 +52,11 @@ window.addEventListener("mouseup", () => {
             //begin string chain
             board.newStringChain(nearestPegIndex, currentColour);
             stringActive = true;
-            cnvMain.style.cursor = "crosshair";
+            updateMouseCursor();
             disableUI();
         }
+
+        updateMouseCursor();
     }
 });
 
@@ -65,21 +65,11 @@ window.addEventListener("mousemove", (e) => {
     prevMousePos.set(currentMousePos);
 
     let canvasBounds = cnvMain.getBoundingClientRect();
-    let canvasPixelsPerScreenPixel = { x: IMG_WIDTH / canvasBounds.width, y: IMG_HEIGHT / canvasBounds.height };
-    currentMousePos.x = (e.x - canvasBounds.x) * canvasPixelsPerScreenPixel.x - centreOffset.x;
-    currentMousePos.y = (e.y - canvasBounds.y) * canvasPixelsPerScreenPixel.y - centreOffset.y;
-    let nearestPegIndex = board.getNearestPegIndex(currentMousePos);
-    let nearestPegPos = board.getPegPos(nearestPegIndex);
-
-    if (isMouseHoveringPeg(nearestPegPos))
-    {
-        cnvMain.style.cursor = "pointer";
-    }
-    else if (cnvMain.style.cursor === "pointer")
-    {
-        if (stringActive) cnvMain.style.cursor = "crosshair";
-        else cnvMain.style.cursor = "default";
-    }
+    let canvasPixelsPerScreenPixel = { x: canvasRes / canvasBounds.width, y: canvasRes / canvasBounds.height };
+    currentMousePos.x = (e.x - canvasBounds.x) * canvasPixelsPerScreenPixel.x - canvasCentreOffset.x;
+    currentMousePos.y = (e.y - canvasBounds.y) * canvasPixelsPerScreenPixel.y - canvasCentreOffset.y;
+    
+    updateMouseCursor();
 
     if (stringActive)
     {
@@ -103,7 +93,7 @@ window.addEventListener("keyup", (e) => {
         else enableWrap = !enableWrap;
         requestDraw = true;
     }
-    if (e.key == "f")
+    if (e.key.toLowerCase() == "z")
     {
         let csc = board.getCurrentStringChain();
         if (csc)
@@ -115,12 +105,30 @@ window.addEventListener("keyup", (e) => {
                 stringActive = false;
                 editing = false;
                 enableUI()
+                updateMouseCursor();
             }
+
             requestDraw = true;
         }
         
     }
 });
+
+function updateMouseCursor()
+{
+    let nearestPegIndex = board.getNearestPegIndex(currentMousePos);
+    let nearestPegPos = board.getPegPos(nearestPegIndex);
+
+    if (isMouseHoveringPeg(nearestPegPos))
+    {
+        cnvMain.style.cursor = "pointer";
+    }
+    else
+    {
+        if (stringActive) cnvMain.style.cursor = "crosshair";
+        else cnvMain.style.cursor = "default";
+    }
+}
 
 function signedTriangleArea(baseStart, baseEnd, peak)
 {
@@ -148,10 +156,4 @@ function isMouseHoveringPeg(pegPos)
 {
     return (pegPos.x - currentMousePos.x) * (pegPos.x - currentMousePos.x) +
            (pegPos.y - currentMousePos.y) * (pegPos.y - currentMousePos.y) < board.pegRadius * board.pegRadius + 100; //bit of extra room for clicking
-}
-
-function mouseStayedWithinBoardRadius()
-{
-    return prevMousePos.x * prevMousePos.x + prevMousePos.y * prevMousePos.y < board.radius * board.radius &&
-           currentMousePos.x * currentMousePos.x + currentMousePos.y * currentMousePos.y < board.radius * board.radius;
 }
