@@ -14,7 +14,7 @@ window.addEventListener("load", init);
 window.addEventListener('beforeunload', (e) => {
     //warn user on leaving page if the board has been drawn on
     //https://stackoverflow.com/questions/3221161/how-to-pop-up-an-alert-box-when-the-browsers-refresh-button-is-clicked
-    if (board.stringChains.length > 0)
+    if (board.stringChains.length > 0 && inpWarnOnPageLeave.checked)
     {
         e.preventDefault();
         e.returnValue = '';

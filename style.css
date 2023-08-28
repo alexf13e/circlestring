@@ -19,6 +19,11 @@ input[type="color"]
     height: 30px;
 }
 
+label
+{
+    user-select: none;
+}
+
 .numberInput
 {
     width: 40px;

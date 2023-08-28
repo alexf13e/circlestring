@@ -52,6 +52,7 @@ window.addEventListener("mouseup", () => {
             //begin string chain
             board.newStringChain(nearestPegIndex, currentColour);
             stringActive = true;
+            enableWrap = true;
             updateMouseCursor();
             disableUI();
         }
@@ -102,6 +103,13 @@ window.addEventListener("keyup", (e) => {
             else
             {
                 board.deleteStringChain(csc);
+
+                if (editing)
+                {
+                    dvStringChainList.removeChild(editingListItem);
+                    editingListItem = null;
+                }
+
                 stringActive = false;
                 editing = false;
                 enableUI()

@@ -8,6 +8,7 @@ let slShiftMode;
 let inpNumPegs;
 let inpCanvasResolution, inpBoardPegRadius;
 let btnApplyVisualSettings;
+let inpWarnOnPageLeave;
 let btnRequestReset, btnSaveBoard, btnLoadBoard;
 
 let dvStringChainList;
@@ -88,6 +89,12 @@ function initUI()
         requestDraw = true;
     });
 
+    inpWarnOnPageLeave = document.getElementById("inpWarnOnPageLeave");
+    let wopl = getLocalStorage("warnOnPageLeave");
+    if (wopl != null) inpWarnOnPageLeave.checked = wopl;
+    inpWarnOnPageLeave.addEventListener("change", () => {
+        setLocalStorage("warnOnPageLeave", inpWarnOnPageLeave.checked);
+    });
 
     btnSaveBoard = document.getElementById("btnSaveBoard");
     btnSaveBoard.addEventListener("click", showSavePopup);
