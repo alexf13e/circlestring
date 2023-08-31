@@ -96,6 +96,7 @@ class StringBoard
         let checkUnwraps = true;
         let lastUnwrappedIndex = null; //track the most recent unwrapped peg and dont allow it to be wrapped
 
+        //until no more wraps or unwraps occur
         while (true)
         {
             //find first wrap position
@@ -161,6 +162,11 @@ class StringBoard
 
     getFirstWrap(p1, p2, p3, startIndex, startClockwise, lastUnwrappedIndex)
     {
+        /*attempted to optimise this by only considering pegs within triangle rather than looping through all of them.
+        became incredibly more complex and inconsistent, and profiling shows around 0.3% of the program time is spent
+        in the actual logic, with the rest being spent drawing to the canvas, so not worth trying to improve currently*/
+
+
         //get potential pegs by finding all within triangle
         let potentials = [];
         for (let pegIndex = 0; pegIndex < this.numPegs; pegIndex++)
@@ -329,7 +335,6 @@ class StringBoard
             context.beginPath();
             context.arc(pos.x, pos.y, this.pegRadius, 0, TWO_PI);
             context.fill();
-            context.stroke();
         }
 
         //draw strings
@@ -341,10 +346,6 @@ class StringBoard
 
     getSaveData()
     {
-        /*could refactor to have wrap start and ends be stored as angles rather than
-        fixed positions, which would remove the need to save board and peg radius.
-        maybe if i get bored of this finally working and want to break it again*/
-
         let angledStringChains = []; //storing angles to tangent points instead of their positions, so boards can be loaded with different board and preg radii
         for (let sc of this.stringChains)
         {

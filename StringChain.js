@@ -53,25 +53,52 @@ class StringChain
 
     draw(context)
     {
-        if (this.pegWraps.length < 2) return;
-
         setStringStyle(this.colour, stringOpacity);
+
+        context.beginPath();
+        let pegPos = board.getPegPos(this.pegWraps[0].pegIndex);
+        context.arc(pegPos.x, pegPos.y, board.pegRadius, 0, TWO_PI);
+        context.stroke();
+
+        if (this.pegWraps.length < 2) return;
 
         let pStart = this.pegWraps[0].wrapEnd;
         let pEnd;
 
         for (let i = 1; i < this.pegWraps.length; i++)
         {
-            //for some reason, the drawn positions noticably budge when wrapping a new string when all being drawn on the same path...
+            let pw = this.pegWraps[i];
+
+            //for some reason, the drawn positions noticably budge when wrapping a new string when all being drawn on the same path, so start a new one each loop
             context.beginPath();
-            ctxMain.moveTo(pStart.x, pStart.y)
+            context.moveTo(pStart.x, pStart.y)
 
-            pEnd = this.pegWraps[i].wrapStart;
-            ctxMain.lineTo(pEnd.x, pEnd.y);
+            pEnd = pw.wrapStart;
+            context.lineTo(pEnd.x, pEnd.y);
             context.stroke();
+            
+            if (i < this.pegWraps.length - 1)
+            {
+                pegPos = board.getPegPos(pw.pegIndex);
+                let dStart = pw.wrapStart.sub(pegPos);
+                let aStart = Math.atan2(dStart.y, dStart.x);
+                let dEnd = pw.wrapEnd.sub(pegPos);
+                let aEnd = Math.atan2(dEnd.y, dEnd.x);
 
+                context.beginPath();
+                context.arc(pegPos.x, pegPos.y, board.pegRadius, aStart, aEnd, !pw.isClockwise);
+                context.stroke();
+            }
+            
             pStart = this.pegWraps[i].wrapEnd;
         }
 
+        if (this != board.getCurrentStringChain())
+        {
+            pegPos = board.getPegPos(this.getLastPegIndex());
+            context.beginPath();
+            context.arc(pegPos.x, pegPos.y, board.pegRadius, 0, TWO_PI);
+            context.stroke();
+        }
     }
 }

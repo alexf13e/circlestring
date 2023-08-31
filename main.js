@@ -52,9 +52,21 @@ function draw()
             let startPos = board.calculateCirclePointTangent(csc.getLastPegIndex(), csc.getLastPegIsClockwise(), currentMousePos);
 
             ctxMain.beginPath();
+            
+            if (csc.getLength() > 1)
+            {
+                let pegPos = board.getPegPos(csc.getLastPegIndex());
+                let dStart = csc.getLastPegWrapStart().sub(pegPos);
+                let aStart = Math.atan2(dStart.y, dStart.x);
+                let dEnd = startPos.sub(pegPos);
+                let aEnd = Math.atan2(dEnd.y, dEnd.x);
+    
+                ctxMain.arc(pegPos.x, pegPos.y, board.pegRadius, aStart, aEnd, !csc.getLastPegIsClockwise());
+            }
+
             ctxMain.moveTo(startPos.x, startPos.y);
             ctxMain.lineTo(currentMousePos.x, currentMousePos.y);
-
+            
             if (editing) setStringStyle(csc.colour, (enableWrap ? stringOpacity : stringOpacityNoWrap));
             else setStringStyle(currentColour, (enableWrap ? stringOpacity : stringOpacityNoWrap));
             ctxMain.stroke();

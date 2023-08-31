@@ -55,6 +55,7 @@ window.addEventListener("mouseup", () => {
             enableWrap = true;
             updateMouseCursor();
             disableUI();
+            requestDraw = true;
         }
 
         updateMouseCursor();

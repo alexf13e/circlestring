@@ -86,6 +86,13 @@ function initUI()
         board = new StringBoard(canvasRes / 2.5, numPegs, pegRadius);
         board.loadFromSave(boardData);
 
+        dvStringChainList.replaceChildren();
+
+        for (let sc of board.stringChains)
+        {
+            addStringChainDiv(sc);
+        }
+
         requestDraw = true;
     });
 
