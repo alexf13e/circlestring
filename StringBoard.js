@@ -346,48 +346,30 @@ class StringBoard
 
     getSaveData()
     {
-        let angledStringChains = []; //storing angles to tangent points instead of their positions, so boards can be loaded with different board and preg radii
+        let stringChains = [];
         for (let sc of this.stringChains)
         {
-            let asc = {
+            let savedSc = {
                 colour: sc.colour,
                 pegWraps: []
             };
 
             for (let pw of sc.pegWraps)
             {
-                let wrapStartAngle = null, wrapEndAngle = null;
-
-                let pegCentre = this.getPegPos(pw.pegIndex);
-
-                if (pw.wrapStart != null)
-                {
-                    let v = pw.wrapStart.sub(pegCentre);
-                    wrapStartAngle = Math.atan2(v.y, v.x);
-                }
-
-                if (pw.wrapEnd != null)
-                {
-                    let v = pw.wrapEnd.sub(pegCentre);
-                    wrapEndAngle = Math.atan2(v.y, v.x);
-                }
-                
-                let apw = {
+                let savedPw = {
                     pegIndex: pw.pegIndex,
-                    isClockwise: pw.isClockwise,
-                    wrapStartAngle: wrapStartAngle,
-                    wrapEndAngle: wrapEndAngle
+                    isClockwise: pw.isClockwise
                 };
 
-                asc.pegWraps.push(apw);
+                savedSc.pegWraps.push(savedPw);
             }
 
-            angledStringChains.push(asc);
+            stringChains.push(savedSc);
         }
 
         let data = {
             numPegs: this.numPegs,
-            stringChains: angledStringChains
+            stringChains: stringChains
         };
 
         return JSON.stringify(data, null, 4);
@@ -468,18 +450,6 @@ class StringBoard
                     result.error = "Missing or invalid data: stringChain[" + i + "]: pegWraps[" + j + "]: isClockwise";
                     return result;
                 }
-
-                if (j > 0 && pw.wrapStartAngle == null)
-                {
-                    result.error = "Missing or invalid data: stringChain[" + i + "]: pegWraps[" + j + "]: wrapStartAngle";
-                    return result;
-                }
-
-                if (j < sc.pegWraps.length - 1 && pw.wrapEndAngle == null)
-                {
-                    result.error = "Missing or invalid data: stringChain[" + i + "]: pegWraps[" + j + "]: wrapEndAngle";
-                    return result;
-                }
             }
         }
 
@@ -488,39 +458,41 @@ class StringBoard
 
         for (let sc of dataObj.stringChains)
         {
-            let positionedPegWraps = [];
+            let pegWraps = [];
 
-            for (let pw of sc.pegWraps)
+            let wrapStartPos = null;
+            for (let i = 0; i < sc.pegWraps.length - 1; i++)
             {
-                let wrapStartPos = null, wrapEndPos = null;
-                let pegCentre = this.getPegPos(pw.pegIndex);
-
-                if (pw.wrapStartAngle != null)
-                {
-                    wrapStartPos = new Vec2(Math.cos(pw.wrapStartAngle) * this.pegRadius, Math.sin(pw.wrapStartAngle) * this.pegRadius);
-                    wrapStartPos = wrapStartPos.add(pegCentre);
-                }
-
-                if (pw.wrapEndAngle != null)
-                {
-                    wrapEndPos = new Vec2(Math.cos(pw.wrapEndAngle) * this.pegRadius, Math.sin(pw.wrapEndAngle) * this.pegRadius);
-                    wrapEndPos = wrapEndPos.add(pegCentre);
-                }
-                
-                let ppw = {
-                    pegIndex: pw.pegIndex,
-                    isClockwise: pw.isClockwise,
+                let pwCurrent = sc.pegWraps[i], pwNext = sc.pegWraps[i + 1];
+                let wrapEnd = this.calculateWrapEnd(pwCurrent.pegIndex, pwCurrent.isClockwise, pwNext.pegIndex, pwNext.isClockwise);
+                                
+                let pw = {
+                    pegIndex: pwCurrent.pegIndex,
+                    isClockwise: pwCurrent.isClockwise,
                     wrapStart: wrapStartPos,
-                    wrapEnd: wrapEndPos
+                    wrapEnd: wrapEnd
                 };
 
-                positionedPegWraps.push(ppw);
+                pegWraps.push(pw);
+
+                let wrapStarts = this.calculateWrapStarts(pwCurrent.pegIndex, pwCurrent.isClockwise, pwNext.pegIndex);
+                if (pwNext.isClockwise) wrapStartPos = wrapStarts.clockwise;
+                else wrapStartPos = wrapStarts.antiClockwise;
             }
+
+            let finalPw = sc.pegWraps[sc.pegWraps.length - 1];
+            let pw = {
+                pegIndex: finalPw.pegIndex,
+                isClockwise: finalPw.isClockwise,
+                wrapStart: wrapStartPos
+            };
+
+            pegWraps.push(pw);
 
 
             let newSC = new StringChain();
             newSC.colour = sc.colour;
-            newSC.pegWraps = positionedPegWraps;
+            newSC.pegWraps = pegWraps;
             this.stringChains.push(newSC);
         }
 
