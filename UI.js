@@ -247,6 +247,7 @@ function initUI()
     btnResetBoard = document.getElementById("btnResetBoard");
     btnResetBoard.addEventListener("click", () => {
         board.reset(parseInt(inpNumPegs.value));
+        board.updatePreRender(cnvMain, ctxMain);
         dvStringChainList.replaceChildren();
         hidePopups();
         requestDraw = true;
@@ -290,6 +291,7 @@ function addStringChainDiv(stringChain)
 
     inpColour.addEventListener("change", (e) => {
         e.currentTarget.parentElement.stringChain.colour = colourInputToRGB(e.currentTarget.value);
+        board.updatePreRender(cnvMain, ctxMain);
         requestDraw = true;
     });
 
