@@ -7,7 +7,10 @@ class StringBoard
         this.numPegs = numPegs;
         this.pegRadius = pegRadius;
         this.stringChains = [];
+        this.patternPreviewChain = null;
         this.currentStringChainIndex = 0;
+        this.preRenderTexture = null;
+        this.activeStringChain = null;
     }
 
     reset(numPegs)
@@ -63,6 +66,7 @@ class StringBoard
     setCurrentStringChain(stringChain)
     {
         this.currentStringChainIndex = this.stringChains.indexOf(stringChain);
+        this.activeStringChain = this.stringChains[this.currentStringChainIndex];
     }
 
     deleteStringChain(stringChain)
@@ -84,7 +88,62 @@ class StringBoard
 
     newStringChain(startIndex, colour)
     {
-        this.stringChains.push(new StringChain(startIndex, this.getPegPos(startIndex), colour));
+        this.stringChains.push(new StringChain(startIndex, colour));
+        this.activeStringChain = this.getCurrentStringChain();
+    }
+
+    generatePatternPreview(startIndex, interval, count, clockwise, colour)
+    {
+        this.patternPreviewChain = new StringChain(startIndex, colour);
+        let csc = this.patternPreviewChain;
+
+        let direction = (clockwise ? 1 : -1);
+        let currentIndex = (startIndex + interval * direction) % this.numPegs;
+        let nextIndex = (currentIndex + interval * direction) % this.numPegs;
+        csc.setLastPegWrapEnd(this.calculateWrapEnd(startIndex, clockwise, currentIndex, clockwise));
+
+        let wrapStarts = this.calculateWrapStarts(startIndex, clockwise, currentIndex);
+        let wrapStartPos = (clockwise ? wrapStarts.clockwise : wrapStarts.antiClockwise);
+
+        let doWrap = () => {
+            let wrapEndPos = this.calculateWrapEnd(currentIndex, clockwise, nextIndex, clockwise);
+            csc.push(currentIndex, clockwise, wrapStartPos, wrapEndPos);
+
+            wrapStarts = this.calculateWrapStarts(currentIndex, clockwise, nextIndex);
+            wrapStartPos = (clockwise ? wrapStarts.clockwise : wrapStarts.antiClockwise);
+
+            currentIndex = (currentIndex + interval * direction) % this.numPegs;
+            nextIndex = (nextIndex + interval * direction) % this.numPegs;
+        };
+
+        if (count == 0)
+        {
+            //repeat until looping back to start
+            while (currentIndex != startIndex)
+            {
+                doWrap();
+            }
+
+            //last finishing wrap around start
+            doWrap();
+            csc.setLastPegWrapEnd(null)
+        }
+        else
+        {
+            //repeat for however many times requested
+            for (let i = 0; i < count; i++)
+            {
+                doWrap();
+            }
+
+            csc.setLastPegWrapEnd(null);
+        }
+    }
+
+    applyPattern()
+    {
+        this.stringChains.push(this.patternPreviewChain);
+        this.nextStringChainIndex();
     }
 
     resolveWraps(prevStringEnd, currentStringEnd)
@@ -208,13 +267,13 @@ class StringBoard
         return { pegIndex: nearestPeg.pegIndex, isClockwise: nearestPeg.isClockwise, wrapStart: nearestPeg.wrapStart };
     }
 
-    calculateWrapEnd(startIndex, startClockwise, endIndex, endClockWise)
+    calculateWrapEnd(prevIndex, prevClockwise, currentIndex, currentClockWise)
     {
-        let tangents = this.calculateCircleTangents(startIndex, endIndex);
+        let tangents = this.calculateCircleTangents(prevIndex, currentIndex);
 
-        if (startClockwise)
+        if (prevClockwise)
         {
-            if (endClockWise)
+            if (currentClockWise)
             {
                 return tangents.tOuter12;
             }
@@ -225,7 +284,7 @@ class StringBoard
         }
         else
         {
-            if (endClockWise)
+            if (currentClockWise)
             {
                 return tangents.tInner11;
             }
@@ -236,12 +295,12 @@ class StringBoard
         }
     }
     
-    calculateWrapStarts(startIndex, startClockwise, endIndex)
+    calculateWrapStarts(currentIndex, currentClockwise, nextIndex)
     {
-        let tangents = this.calculateCircleTangents(startIndex, endIndex);
+        let tangents = this.calculateCircleTangents(currentIndex, nextIndex);
         let wrapPoints = { clockwise: null, antiClockwise: null };
 
-        if (startClockwise)
+        if (currentClockwise)
         {
             wrapPoints.clockwise = tangents.tOuter22;
             wrapPoints.antiClockwise = tangents.tInner22;
@@ -324,8 +383,11 @@ class StringBoard
         }
     }
 
-    draw(context)
+    updatePreRender(canvas, context)
     {
+        console.log("update pre render");
+        context.clearRect(-canvasCentreOffset.x, -canvasCentreOffset.y, canvasRes, canvasRes);
+
         //draw pegs
         context.strokeStyle = "black";
         for (let i = 0; i < this.numPegs; i++)
@@ -340,7 +402,24 @@ class StringBoard
         //draw strings
         for (let sc of this.stringChains)
         {
-            sc.draw(context);
+            if (sc == this.activeStringChain) continue;
+            sc.draw(context, false);
+        }
+
+
+        this.preRenderTexture = canvas.toDataURL("image/png");
+        canvas.style.backgroundImage = "url(" + this.preRenderTexture + ")";
+    }
+
+    draw(context)
+    {
+        context.clearRect(-canvasCentreOffset.x, -canvasCentreOffset.y, canvasRes, canvasRes);
+        
+        if (this.activeStringChain != null) this.activeStringChain.draw(context, false);
+
+        if (previousHoveredPegIndex != null)
+        {
+            this.patternPreviewChain.draw(context, true);
         }
     }
 
@@ -455,6 +534,7 @@ class StringBoard
 
         this.numPegs = dataObj.numPegs;
         this.stringChains = [];
+
 
         for (let sc of dataObj.stringChains)
         {

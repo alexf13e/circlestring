@@ -3,62 +3,16 @@ let currentMousePos, prevMousePos;
 let stringActive = false;
 let editing = false;
 let enableWrap = true;
+let previousHoveredPegIndex = null;
 
 window.addEventListener("mouseup", () => {
     //if close enough to a peg, set that as the starting one
     let nearestPegIndex = board.getNearestPegIndex(currentMousePos);
-    let nearestPegPos = board.getPegPos(nearestPegIndex);
-    let currentStringChain = board.getCurrentStringChain();
 
-    if (isMouseHoveringPeg(nearestPegPos))
+    if (isMouseHoveringPeg(nearestPegIndex))
     {
-        if (stringActive)
-        {
-            if (nearestPegIndex === currentStringChain.getFirstPegIndex() && currentStringChain.getLength() === 1)
-            {
-                //unwrapped from all pegs, remove the chain
-                board.deleteStringChain(currentStringChain);
-
-                if (editing)
-                {
-                    //remove this chain from the list of existing chains
-                    dvStringChainList.removeChild(editingListItem);
-                    editingListItem = null;
-                }
-            }
-            else
-            {
-                //finish the string here
-                if (currentStringChain.getLastPegIndex() != nearestPegIndex)
-                {
-                    let wrapStarts = board.calculateWrapStarts(currentStringChain.getLastPegIndex(), currentStringChain.getLastPegIsClockwise(), nearestPegIndex);
-                    let wrapEnd = board.calculateWrapEnd(currentStringChain.getLastPegIndex(), currentStringChain.getLastPegIsClockwise(), nearestPegIndex, true);
-                    currentStringChain.setLastPegWrapEnd(wrapEnd);
-                    currentStringChain.push(nearestPegIndex, true, wrapStarts.clockwise, null); //default to clockwise when clicked
-                }
-                
-                if (!editing) addStringChainDiv(currentStringChain);
-                
-                board.nextStringChainIndex();
-            }
-            
-            stringActive = false;
-            editing = false;
-            enableUI()
-            requestDraw = true;
-        }
-        else
-        {
-            //begin string chain
-            board.newStringChain(nearestPegIndex, currentColour);
-            stringActive = true;
-            enableWrap = true;
-            updateMouseCursor();
-            disableUI();
-            requestDraw = true;
-        }
-
-        updateMouseCursor();
+        if (slDrawMode.value == "Manual") pegClickManual(nearestPegIndex);
+        else if (slDrawMode.value == "Pattern") pegClickPattern();
     }
 });
 
@@ -71,13 +25,43 @@ window.addEventListener("mousemove", (e) => {
     currentMousePos.x = (e.x - canvasBounds.x) * canvasPixelsPerScreenPixel.x - canvasCentreOffset.x;
     currentMousePos.y = (e.y - canvasBounds.y) * canvasPixelsPerScreenPixel.y - canvasCentreOffset.y;
     
-    updateMouseCursor();
-
-    if (stringActive)
+    
+    if (slDrawMode.value == "Manual")
     {
-        if (enableWrap) board.resolveWraps(prevMousePos, currentMousePos);
-        requestDraw = true;
+        if (stringActive)
+        {
+            if (enableWrap) board.resolveWraps(prevMousePos, currentMousePos);
+            requestDraw = true;
+        }
     }
+    else if (slDrawMode.value == "Pattern")
+    {
+        let currentHoveredPegIndex = null;
+        let nearestPegIndex = board.getNearestPegIndex(currentMousePos);
+        if (isMouseHoveringPeg(nearestPegIndex))
+        {
+            currentHoveredPegIndex = nearestPegIndex;
+        }
+
+        if (currentHoveredPegIndex != null && currentHoveredPegIndex != previousHoveredPegIndex)
+        {
+            //create new hover preview
+            let interval = parseInt(inpPatternInterval.value);
+            let count;
+            if (inpPatternCount.value === "") count = 0;
+            else count = parseInt(inpPatternCount.value);
+            let clockwise = (slPatternDirection.value == "Clockwise");
+            let colour = colourInputToRGB(inpStringColour.value);
+            board.generatePatternPreview(currentHoveredPegIndex, interval, count, clockwise, colour);
+            requestDraw = true;
+        }
+
+        if (currentHoveredPegIndex == null && previousHoveredPegIndex != null) requestDraw = true;
+
+        previousHoveredPegIndex = currentHoveredPegIndex;
+    }
+    
+    updateMouseCursor();
 });
 
 window.addEventListener("keydown", (e) => {
@@ -123,12 +107,76 @@ window.addEventListener("keyup", (e) => {
     }
 });
 
+function pegClickManual(nearestPegIndex)
+{
+    let currentStringChain = board.getCurrentStringChain();
+    if (stringActive)
+    {
+        if (nearestPegIndex === currentStringChain.getFirstPegIndex() && currentStringChain.getLength() === 1)
+        {
+            //unwrapped from all pegs, remove the chain
+            board.deleteStringChain(currentStringChain);
+
+            if (editing)
+            {
+                //remove this chain from the list of existing chains
+                dvStringChainList.removeChild(editingListItem);
+                editingListItem = null;
+            }
+        }
+        else
+        {
+            //finish the string here
+            if (currentStringChain.getLastPegIndex() != nearestPegIndex)
+            {
+                let wrapStarts = board.calculateWrapStarts(currentStringChain.getLastPegIndex(), currentStringChain.getLastPegIsClockwise(), nearestPegIndex);
+                let wrapEnd = board.calculateWrapEnd(currentStringChain.getLastPegIndex(), currentStringChain.getLastPegIsClockwise(), nearestPegIndex, true);
+                currentStringChain.setLastPegWrapEnd(wrapEnd);
+                currentStringChain.push(nearestPegIndex, true, wrapStarts.clockwise, null); //default to clockwise when clicked
+            }
+            
+            if (!editing) addStringChainDiv(currentStringChain);
+            
+            board.nextStringChainIndex();
+        }
+        
+        board.activeStringChain = null;
+        board.updatePreRender(cnvMain, ctxMain);
+        stringActive = false;
+        editing = false;
+        enableUI()
+        requestDraw = true;
+    }
+    else
+    {
+        //begin string chain
+        board.newStringChain(nearestPegIndex, currentColour);
+        stringActive = true;
+        enableWrap = true;
+        updateMouseCursor();
+        disableUI();
+        requestDraw = true;
+    }
+
+    updateMouseCursor();
+}
+
+function pegClickPattern()
+{
+    if (previousHoveredPegIndex != null)
+    {
+        board.applyPattern();
+        addStringChainDiv(board.patternPreviewChain);
+        board.updatePreRender(cnvMain, ctxMain);
+        requestDraw = true;
+    }
+}
+
 function updateMouseCursor()
 {
     let nearestPegIndex = board.getNearestPegIndex(currentMousePos);
-    let nearestPegPos = board.getPegPos(nearestPegIndex);
 
-    if (isMouseHoveringPeg(nearestPegPos))
+    if (isMouseHoveringPeg(nearestPegIndex))
     {
         cnvMain.style.cursor = "pointer";
     }
@@ -161,8 +209,9 @@ function isPointInTriangle(t1, t2, t3, p)
     return { isWrapped: (s1 === s2 && s1 !== s3), isClockwise: s1 > 0 };
 }
 
-function isMouseHoveringPeg(pegPos)
+function isMouseHoveringPeg(pegIndex)
 {
+    let pegPos = board.getPegPos(pegIndex);
     return (pegPos.x - currentMousePos.x) * (pegPos.x - currentMousePos.x) +
            (pegPos.y - currentMousePos.y) * (pegPos.y - currentMousePos.y) < board.pegRadius * board.pegRadius + 100; //bit of extra room for clicking
 }

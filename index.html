@@ -20,11 +20,60 @@
             <p id="pLeftAlign">Previous Strings</p> <!--shame be upon me, but it was the easiest way to make it pad exactly the same as the other side-->
             <div id="dvUILeft">
                 <p>Click a peg to start and finish a string.<br>
-                    Draw the string around pegs to wrap around them, draw back in the opposite direction or press [z] to unwrap.<br>
-                    Use [shift] to disable wrapping</p>
-                <input id="inpStringColour" name="inpStringColour" type="color">
-                <label for="inpStringColour">String colour</label>
-                <div id="dvSettings">
+                    Draw the string around pegs to wrap them.<br>
+                    Draw back in the opposite direction or press [z] to unwrap.<br>
+                    Use [shift] to disable wrapping
+                </p>
+                <div id="dvDrawingSettings" class="settings">
+                    <span>
+                        <input id="inpStringColour" name="inpStringColour" type="color">
+                        <label for="inpStringColour">String colour</label>
+                    </span>
+                    <span>
+                        <select id="slDrawMode" name="slDrawMode">
+                            <option>Manual</option>
+                            <option>Pattern</option>
+                        </select>
+                        <label for="slDrawMode">mode</label>
+                    </span>
+                </div>
+                <div id="dvPatternSettings">
+                    <p>
+                        Hover peg to preview, click to confirm
+                    </p>
+                    <span>
+                        <label>Interval</label>
+                        <input id="inpPatternInterval" class="numberInput" name="inpPatternInterval" type="number" min="1" max="64">
+                    </span>
+                    <span>
+                        <label for="inpPatternCount">Count</label>
+                        <input id="inpPatternCount" class="numberInput" name="inpPatternCount" type="number" min="0" max="64" placeholder="Until repeat">
+                    </span>
+                    <select id="slPatternDirection">
+                        <option>Clockwise</option>
+                        <option>Anticlockwise</option>
+                    </select>
+                </div>
+                
+                <hr>
+                <div id="dvVisualSettings" class="settings"> 
+                    <span>
+                        <label for="inpCanvasResolution">Board resolution</label>
+                        <input id="inpCanvasResolution" class="numberInput" name="inpCanvasResolution" type="number" min="256" max="4096">
+                        <label>px</label>
+                    </span>
+                    <span>
+                        <label for="inpBoardPegRadius">Peg size</label>
+                        <input id="inpBoardPegRadius" class="numberInput" name="inpBoardPegRadius" type="number" min="1" max="16">
+                    </span>
+                    <button id="btnApplyVisualSettings">Apply</button>
+                </div>
+                <hr>
+                <div id="dvMiscSettings" class="settings">
+                    <span>
+                        <input id="inpNumPegs" class="numberInput" name="inpNumPegs" type="number" min="2" max="512">
+                        <label for="inpNumPegs">Number of pegs (requires clear)</label>
+                    </span>
                     <span>
                         <select id="slShiftMode" name="slShiftMode">
                             <option>Hold</option>
@@ -37,32 +86,16 @@
                         <label for="inpAutoEditWrap">Auto-disable wrapping on edit start</label>
                     </span>
                     <span>
-                        <input id="inpNumPegs" class="numberInput" name="inpNumPegs" type="number" min="2" max="512">
-                        <label for="inpNumPegs">Number of pegs (requires clear)</label>
-                    </span>
-                    <div id="dvBoardVisualSettings">
-                        <span>
-                            <label for="inpCanvasResolution">Board resolution</label>
-                            <input id="inpCanvasResolution" class="numberInput" name="inpCanvasResolution" type="number" min="256">
-                            <label>px</label>
-                        </span>
-                        <span>
-                            <label for="inpBoardPegRadius">Peg size</label>
-                            <input id="inpBoardPegRadius" class="numberInput" name="inpBoardPegRadius" type="number" min="1" max="16">
-                        </span>
-                        <button id="btnApplyVisualSettings">Apply</button>
-                    </div>
-                    <span>
                         <input id="inpWarnOnPageLeave" name="inpWarnOnPageLeave" type="checkbox" checked>
                         <label for="inpWarnOnPageLeave">Warn of potential unsaved changes on page leave</label>
                     </span>
-                    <span id="spSaveButtons">
-                        <button id="btnSaveBoard">Save</button>
-                        <button id="btnLoadBoard">Load</button>
-                        <button id="btnRequestReset">Clear</button>
-                    </span>
                 </div>
-                <br>
+                <hr>
+                <div id="dvSaveButtons">
+                    <button id="btnSaveBoard">Save</button>
+                    <button id="btnLoadBoard">Load</button>
+                    <button id="btnRequestReset">Clear</button>
+                </div>
                 <p id="pCredits"><a target="_blank" href="https://icons8.com/icon/86374/edit">Edit</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a><br>
                     <a target="_blank" href="https://icons8.com/icon/14367/waste">Bin</a> icon by <a target="_blank" href="https://icons8.com">Icons8</a></p>
             </div>

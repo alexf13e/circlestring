@@ -3,13 +3,18 @@ let cnvMain, ctxMain;
 let canvasRes;
 let canvasCentreOffset;
 
-let inpStringColour, inpAutoEditWrap;
-let slShiftMode;
-let inpNumPegs;
+let inpStringColour, slDrawMode;
+
+let dvPatternSettings;
+let inpPatternInterval, inpPatternCount, slPatternDirection;
+
+let inpAutoEditWrap;
 let inpCanvasResolution, inpBoardPegRadius;
 let btnApplyVisualSettings;
-let inpWarnOnPageLeave;
-let btnRequestReset, btnSaveBoard, btnLoadBoard;
+
+let inpNumPegs, slShiftMode, inpWarnOnPageLeave;
+
+let btnSaveBoard, btnLoadBoard, btnRequestReset;
 
 let dvStringChainList;
 let editingListItem = null;
@@ -31,6 +36,38 @@ function initUI()
     inpStringColour.addEventListener("change", () => {
         currentColour = colourInputToRGB(inpStringColour.value);
     });
+
+    slDrawMode = document.getElementById("slDrawMode");
+    slDrawMode.value = "Manual";
+    slDrawMode.addEventListener("change", () => {
+        if (slDrawMode.value == "Manual")
+        {
+            dvPatternSettings.style.display = "none";
+        }
+        else
+        {
+            dvPatternSettings.style.display = "grid";
+        }
+    });
+
+    dvPatternSettings = document.getElementById("dvPatternSettings");
+
+    inpPatternInterval = document.getElementById("inpPatternInterval");
+    inpPatternInterval.addEventListener("change", () => {
+        constrainNumberInput(inpPatternInterval);
+    });
+    inpPatternInterval.max = DEFAULT_NUMPEGS - 1;
+    inpPatternInterval.value = 1;
+
+    inpPatternCount = document.getElementById("inpPatternCount");
+    inpPatternCount.addEventListener("change", () => {
+        constrainNumberInput(inpPatternCount);
+        if (inpPatternCount.value == 0) inpPatternCount.value = "";
+    });
+    inpPatternCount.max = DEFAULT_NUMPEGS;
+
+    slPatternDirection = document.getElementById("slPatternDirection");
+
 
     inpAutoEditWrap = document.getElementById("inpAutoEditWrap");
     inpAutoEditWrap.addEventListener("change", () => {
@@ -187,6 +224,11 @@ function initUI()
             requestDraw = true;
             hidePopups();
         }
+
+        inpPatternInterval.max = board.numPegs - 1;
+        inpPatternCount.max = board.numPegs;
+        constrainNumberInput(inpPatternInterval);
+        constrainNumberInput(inpPatternCount);
     });
 
     dvConfirmResetPopup = document.getElementById("dvConfirmResetPopup");
@@ -205,6 +247,10 @@ function initUI()
         dvStringChainList.replaceChildren();
         hidePopups();
         requestDraw = true;
+        inpPatternInterval.max = board.numPegs - 1;
+        inpPatternCount.max = board.numPegs;
+        constrainNumberInput(inpPatternInterval);
+        constrainNumberInput(inpPatternCount);
     });
 
     btnCloseResetPopup = document.getElementById("btnCloseResetPopup");
@@ -246,16 +292,21 @@ function addStringChainDiv(stringChain)
 
     btnEdit.addEventListener("click", (e) => {
         board.setCurrentStringChain(e.currentTarget.parentElement.stringChain);
+        board.updatePreRender(cnvMain, ctxMain);
         stringActive = true;
         editing = true;
         editingListItem = e.currentTarget.parentElement;
         if (inpAutoEditWrap.checked) enableWrap = false;
         btnEdit.blur();
+        slDrawMode.value = "Manual";
+        dvPatternSettings.style.display = "none";
+        requestDraw = true;
         disableUI();
     });
 
     btnDelete.addEventListener("click", (e) => {
         board.deleteStringChain(e.currentTarget.parentElement.stringChain);
+        board.updatePreRender(cnvMain, ctxMain);
         dvStringChainList.removeChild(e.currentTarget.parentElement);
         requestDraw = true;
     });
@@ -276,6 +327,7 @@ function constrainNumberInput(element)
 function enableUI()
 {
     inpStringColour.disabled = false;
+    slDrawMode.disabled = false;
     btnApplyVisualSettings.disabled = false;
     btnSaveBoard.disabled = false;
     btnLoadBoard.disabled = false;
@@ -296,6 +348,7 @@ function enableUI()
 function disableUI()
 {
     inpStringColour.disabled = true;
+    slDrawMode.disabled = true;
     btnApplyVisualSettings.disabled = true;
     btnSaveBoard.disabled = true;
     btnLoadBoard.disabled = true;

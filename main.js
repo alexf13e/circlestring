@@ -31,6 +31,7 @@ function init()
     initUI();
 
     board = new StringBoard(canvasRes / 2.5, DEFAULT_NUMPEGS, DEFAULT_PEGRADIUS);
+    board.updatePreRender(cnvMain, ctxMain);
 
     requestDraw = true;
     requestAnimationFrame(draw);
@@ -40,8 +41,6 @@ function draw()
 {
     if (requestDraw)
     {
-        ctxMain.clearRect(-canvasCentreOffset.x, -canvasCentreOffset.y, canvasRes, canvasRes);
-
         //draw board's pegs and strings
         board.draw(ctxMain);
 

@@ -13,6 +13,16 @@ button
     height: fit-content;
 }
 
+hr
+{
+    width: 100%;
+    border-bottom: none;
+    border-left: none;
+    border-right: none;
+    margin: 5% 0 5% 0;
+    color: lightgray;
+}
+
 input[type="color"]
 {
     width: 30px;
@@ -22,6 +32,13 @@ input[type="color"]
 label
 {
     user-select: none;
+}
+
+.innerUIDiv
+{
+    display: grid;
+    padding: 3%;
+    box-shadow: lightgray 0 0 2px 2px inset;
 }
 
 .numberInput
@@ -55,6 +72,21 @@ label
     margin: auto;
 }
 
+.settings
+{
+    display: grid;
+}
+
+.settings > *
+{
+    margin-bottom: 2%;
+}
+
+.settings > *:last-child
+{
+    margin-bottom: 0;
+}
+
 .stringListContainer
 {
     display: grid;
@@ -82,23 +114,12 @@ label
     background-image: url("icons8-bin-32.png");
 }
 
-#btnApplyVisualSettings
-{
-    margin-top: 3%;
-}
-
 #cnvMain
 {
     height: min(100%, 50vw);
     margin: auto;
     box-shadow: lightgray 0 0 5px 5px;
-}
-
-#dvBoardVisualSettings
-{
-    display: grid;
-    padding: 3%;
-    box-shadow: lightgray 0 0 2px 2px inset;
+    background-size: cover;
 }
 
 #dvMain
@@ -106,6 +127,16 @@ label
     display: grid;
     grid-template-columns: 1fr 60% 1fr;
     height: 100%;
+}
+
+#dvPatternSettings > span
+{
+    margin-bottom: 1%;
+}
+
+#dvPatternSettings > span:last-child
+{
+    margin-bottom: 0;
 }
 
 #dvPopupBackground
@@ -118,6 +149,13 @@ label
     left: 0;
     background-color: rgba(0, 0, 0, 0.05);
     backdrop-filter: blur(2px);
+}
+
+#dvStringChainList
+{
+    overflow: auto;
+    box-shadow: lightgray 0 0 5px 5px inset;
+    padding: 5%;
 }
 
 #dvUILeft
@@ -140,22 +178,19 @@ label
     margin-bottom: 20%;
 }
 
-#dvSettings
+#dvVisualSettings > *
 {
-    display: grid;
-    margin: 10px 0 10px 0;
+    margin-bottom: 1%;
 }
 
-#dvSettings > *
+#inpPatternCount
 {
-    margin-bottom: 2%;
+    width: 80px;
 }
 
-#dvStringChainList
+#pControlsPattern
 {
-    overflow: auto;
-    box-shadow: lightgray 0 0 5px 5px inset;
-    padding: 5%;
+    display: none;
 }
 
 #pCredits
@@ -176,9 +211,20 @@ label
     text-align: center;
 }
 
-#spSaveButtons
+#dvPatternSettings
 {
-    margin-top: 5%;
+    display: none;
+}
+
+#dvSaveButtons
+{
+    display: inline-block;
+    margin-bottom: 5%;
+}
+
+#slPatternDirection
+{
+    width: fit-content;
 }
 
 #taLoad

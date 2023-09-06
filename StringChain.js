@@ -1,9 +1,9 @@
 class StringChain
 {
-    constructor(startIndex, startPos, colour)
+    constructor(startIndex, colour)
     {
         this.colour = colour;
-        this.pegWraps = [{ pegIndex: startIndex, isClockwise: true, wrapStart: null, wrapEnd: startPos }];
+        this.pegWraps = [{ pegIndex: startIndex, isClockwise: true, wrapStart: null, wrapEnd: null }];
     }
 
     push(pegIndex, isClockwise, wrapStart, wrapEnd)
@@ -51,9 +51,10 @@ class StringChain
         return this.pegWraps.length;
     }
 
-    draw(context)
+    draw(context, preview)
     {
-        setStringStyle(this.colour, stringOpacity);
+        if (preview) setStringStyle(this.colour, stringOpacityNoWrap);
+        else setStringStyle(this.colour, stringOpacity);
 
         context.beginPath();
         let pegPos = board.getPegPos(this.pegWraps[0].pegIndex);
