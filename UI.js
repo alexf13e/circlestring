@@ -122,6 +122,7 @@ function initUI()
         let boardData = board.getSaveData();
         board = new StringBoard(canvasRes / 2.5, numPegs, pegRadius);
         board.loadFromSave(boardData);
+        board.updatePreRender(cnvMain, ctxMain);
 
         dvStringChainList.replaceChildren();
 
@@ -224,6 +225,8 @@ function initUI()
             requestDraw = true;
             hidePopups();
         }
+
+        board.updatePreRender(cnvMain, ctxMain);
 
         inpPatternInterval.max = board.numPegs - 1;
         inpPatternCount.max = board.numPegs;
