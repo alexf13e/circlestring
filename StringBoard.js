@@ -120,9 +120,11 @@ class StringBoard
         if (count == 0)
         {
             //repeat until looping back to start
-            while (currentIndex != startIndex)
+            let safetyCheck = 0; //no reason to ever do more wraps than there are pegs
+            while (currentIndex != startIndex && safetyCheck < this.numPegs)
             {
                 doWrap();
+                safetyCheck++;
             }
 
             //last finishing wrap around start
