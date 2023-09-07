@@ -46,13 +46,9 @@ window.addEventListener("mousemove", (e) => {
         if (currentHoveredPegIndex != null && currentHoveredPegIndex != previousHoveredPegIndex)
         {
             //create new hover preview
-            let interval = parseInt(inpPatternInterval.value);
-            let count;
-            if (inpPatternCount.value === "") count = 0;
-            else count = parseInt(inpPatternCount.value);
             let clockwise = (slPatternDirection.value == "Clockwise");
             let colour = colourInputToRGB(inpStringColour.value);
-            board.generatePatternPreview(currentHoveredPegIndex, interval, count, clockwise, colour);
+            board.generatePatternPreview(currentHoveredPegIndex, patternInterval, patternCount, clockwise, colour);
             requestDraw = true;
         }
 

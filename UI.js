@@ -1,18 +1,13 @@
 
-let cnvMain, ctxMain;
-let canvasRes;
-let canvasCentreOffset;
-
 let inpStringColour, slDrawMode;
 
 let dvPatternSettings;
 let inpPatternInterval, inpPatternCount, slPatternDirection;
 
-let inpAutoEditWrap;
 let inpCanvasResolution, inpBoardPegRadius;
 let btnApplyVisualSettings;
 
-let inpNumPegs, slShiftMode, inpWarnOnPageLeave;
+let inpNumPegs, slShiftMode, inpAutoEditWrap, inpWarnOnPageLeave;
 
 let btnSaveBoard, btnLoadBoard, btnRequestReset;
 
@@ -24,13 +19,24 @@ let dvSavePopup, btnCopyToClipboard, aSaveAsFile, btnCloseSavePopup;
 let dvLoadPopup, inpLoadFile, taLoad, btnLoad, btnCloseLoadPopup;
 let dvConfirmResetPopup, btnResetBoard, btnCloseResetPopup;
 
+let cnvMain, ctxMain;
+let canvasRes;
+let canvasCentreOffset;
+
 const DEFAULT_NUMPEGS = 64;
 const DEFAULT_CANVASRES = 1024;
 const DEFAULT_PEGRADIUS = 3;
+const DEFAULT_PATTERNINTERVAL = 1;
+const DEFAULT_PATTERNCOUNT = 0;
+
+let patternInterval = DEFAULT_PATTERNINTERVAL;
+let patternCount = DEFAULT_PATTERNCOUNT;
 
 
 function initUI()
 {
+    //ui left
+    //drawing settings
     inpStringColour = document.getElementById("inpStringColour");
     inpStringColour.value = "#000000";
     inpStringColour.addEventListener("change", () => {
@@ -50,49 +56,38 @@ function initUI()
         }
     });
 
+
+    //pattern settings
     dvPatternSettings = document.getElementById("dvPatternSettings");
 
     inpPatternInterval = document.getElementById("inpPatternInterval");
     inpPatternInterval.addEventListener("change", () => {
         constrainNumberInput(inpPatternInterval);
+        patternInterval = parseInt(inpPatternInterval.value);
     });
     inpPatternInterval.max = DEFAULT_NUMPEGS - 1;
-    inpPatternInterval.value = 1;
+    inpPatternInterval.value = DEFAULT_PATTERNINTERVAL;
 
     inpPatternCount = document.getElementById("inpPatternCount");
     inpPatternCount.addEventListener("change", () => {
         constrainNumberInput(inpPatternCount);
+        patternCount = parseInt(inpPatternCount.value);
         if (inpPatternCount.value == 0) inpPatternCount.value = "";
     });
+    inpPatternCount.value = DEFAULT_PATTERNCOUNT;
+    if (inpPatternCount.value == 0) inpPatternCount.value = "";
     inpPatternCount.max = DEFAULT_NUMPEGS;
 
     slPatternDirection = document.getElementById("slPatternDirection");
 
 
-    inpAutoEditWrap = document.getElementById("inpAutoEditWrap");
-    inpAutoEditWrap.addEventListener("change", () => {
-        setLocalStorage("autoEditWrap", inpAutoEditWrap.checked);
-    });
-    let aew = getLocalStorage("autoEditWrap");
-    if (aew != null) inpAutoEditWrap.checked = aew;
-
-    slShiftMode = document.getElementById("slShiftMode");
-    slShiftMode.addEventListener("change", () => {
-        setLocalStorage("shiftMode", slShiftMode.value);
-    });
-    let sm = getLocalStorage("shiftMode");
-    if (sm != null) slShiftMode.value = sm;
-
-    inpNumPegs = document.getElementById("inpNumPegs");
-    inpNumPegs.addEventListener("change", () => {
-        constrainNumberInput(inpNumPegs);
-    });
-    inpNumPegs.value = DEFAULT_NUMPEGS;
-
-
+    //visual settings
     inpCanvasResolution = document.getElementById("inpCanvasResolution");
     inpCanvasResolution.addEventListener("change", () => {
         constrainNumberInput(inpCanvasResolution);
+    });
+    inpCanvasResolution.addEventListener("keyup", (e) => {
+        if (e.key == "Enter") applyVisualSettings();
     });
     inpCanvasResolution.value = DEFAULT_CANVASRES;
     canvasRes = DEFAULT_CANVASRES;
@@ -101,38 +96,37 @@ function initUI()
     inpBoardPegRadius.addEventListener("change", () => {
         constrainNumberInput(inpBoardPegRadius);
     });
+    inpBoardPegRadius.addEventListener("keyup", (e) => {
+        if (e.key == "Enter") applyVisualSettings();
+    });
     inpBoardPegRadius.value = DEFAULT_PEGRADIUS;
 
     btnApplyVisualSettings = document.getElementById("btnApplyVisualSettings");
     btnApplyVisualSettings.addEventListener("click", () => {
-        //if no changes, no point in reapplying them
-        if (inpCanvasResolution.value == canvasRes && board.pegRadius == inpBoardPegRadius.value) return;
-
-        canvasRes = parseInt(inpCanvasResolution.value);
-        let numPegs = board.numPegs; //cant change numpegs here, requires reset, so keep same as before
-        let pegRadius = parseInt(inpBoardPegRadius.value);
-
-        cnvMain.width = canvasRes;
-        cnvMain.height = canvasRes;
-        canvasCentreOffset.x = canvasRes / 2;
-        canvasCentreOffset.y = canvasRes / 2;
-        ctxMain.translate(canvasCentreOffset.x, canvasCentreOffset.y);
-        
-        //need to recalculate tangent points for new board settings, easiest to save and reload the board
-        let boardData = board.getSaveData();
-        board = new StringBoard(canvasRes / 2.5, numPegs, pegRadius);
-        board.loadFromSave(boardData);
-        board.updatePreRender(cnvMain, ctxMain);
-
-        dvStringChainList.replaceChildren();
-
-        for (let sc of board.stringChains)
-        {
-            addStringChainDiv(sc);
-        }
-
-        requestDraw = true;
+        applyVisualSettings();
     });
+
+
+    //misc settings
+    inpNumPegs = document.getElementById("inpNumPegs");
+    inpNumPegs.addEventListener("change", () => {
+        constrainNumberInput(inpNumPegs);
+    });
+    inpNumPegs.value = DEFAULT_NUMPEGS;
+
+    slShiftMode = document.getElementById("slShiftMode");
+    slShiftMode.addEventListener("change", () => {
+        setLocalStorage("shiftMode", slShiftMode.value);
+    });
+    let sm = getLocalStorage("shiftMode");
+    if (sm != null) slShiftMode.value = sm;
+
+    inpAutoEditWrap = document.getElementById("inpAutoEditWrap");
+    inpAutoEditWrap.addEventListener("change", () => {
+        setLocalStorage("autoEditWrap", inpAutoEditWrap.checked);
+    });
+    let aew = getLocalStorage("autoEditWrap");
+    if (aew != null) inpAutoEditWrap.checked = aew;
 
     inpWarnOnPageLeave = document.getElementById("inpWarnOnPageLeave");
     let wopl = getLocalStorage("warnOnPageLeave");
@@ -141,21 +135,31 @@ function initUI()
         setLocalStorage("warnOnPageLeave", inpWarnOnPageLeave.checked);
     });
 
+
+    //save buttons
     btnSaveBoard = document.getElementById("btnSaveBoard");
     btnSaveBoard.addEventListener("click", showSavePopup);
     
-
     btnLoadBoard = document.getElementById("btnLoadBoard");
     btnLoadBoard.addEventListener("click", showLoadPopup);
 
-    dvStringChainList = document.getElementById("dvStringChainList");
+    btnRequestReset = document.getElementById("btnRequestReset");
+    btnRequestReset.addEventListener("click", () => {
+        showResetPopup();
+    });
 
+
+    //ui right
+    dvStringChainList = document.getElementById("dvStringChainList");
 
     dvPopupBackground = document.getElementById("dvPopupBackground");
     dvPopupBackground.addEventListener("click", (e) => {
         hidePopups();
     });
 
+
+    //popups
+    //save popup
     dvSavePopup = document.getElementById("dvSavePopup");
     dvSavePopup.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -174,6 +178,7 @@ function initUI()
     btnCloseSavePopup.addEventListener("click", hidePopups);
 
 
+    //load popup
     dvLoadPopup = document.getElementById("dvLoadPopup");
     dvLoadPopup.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -234,14 +239,11 @@ function initUI()
         constrainNumberInput(inpPatternCount);
     });
 
+
+    //reset/clear popup
     dvConfirmResetPopup = document.getElementById("dvConfirmResetPopup");
     dvConfirmResetPopup.addEventListener("click", (e) => {
         e.stopPropagation();
-    });
-
-    btnRequestReset = document.getElementById("btnRequestReset");
-    btnRequestReset.addEventListener("click", () => {
-        showResetPopup();
     });
 
     btnResetBoard = document.getElementById("btnResetBoard");
@@ -260,6 +262,8 @@ function initUI()
     btnCloseResetPopup = document.getElementById("btnCloseResetPopup");
     btnCloseResetPopup.addEventListener("click", hidePopups);
 
+
+    //canvas
     cnvMain = document.getElementById("cnvMain");
     ctxMain = cnvMain.getContext("2d");
     cnvMain.width = canvasRes;
@@ -321,6 +325,37 @@ function addStringChainDiv(stringChain)
     dvContainer.appendChild(btnDelete);
 
     dvStringChainList.appendChild(dvContainer);
+}
+
+function applyVisualSettings()
+{
+    //if no changes, no point in reapplying them
+    if (inpCanvasResolution.value == canvasRes && board.pegRadius == inpBoardPegRadius.value) return;
+
+    canvasRes = parseInt(inpCanvasResolution.value);
+    let numPegs = board.numPegs; //cant change numpegs here, requires reset, so keep same as before
+    let pegRadius = parseInt(inpBoardPegRadius.value);
+
+    cnvMain.width = canvasRes;
+    cnvMain.height = canvasRes;
+    canvasCentreOffset.x = canvasRes / 2;
+    canvasCentreOffset.y = canvasRes / 2;
+    ctxMain.translate(canvasCentreOffset.x, canvasCentreOffset.y);
+    
+    //need to recalculate tangent points for new board settings, easiest to save and reload the board
+    let boardData = board.getSaveData();
+    board = new StringBoard(canvasRes / 2.5, numPegs, pegRadius);
+    board.loadFromSave(boardData);
+    board.updatePreRender(cnvMain, ctxMain);
+
+    dvStringChainList.replaceChildren();
+
+    for (let sc of board.stringChains)
+    {
+        addStringChainDiv(sc);
+    }
+
+    requestDraw = true;
 }
 
 function constrainNumberInput(element)
