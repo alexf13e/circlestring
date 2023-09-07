@@ -49,7 +49,8 @@ class StringBoard
         else
         {
             //next is closer
-            return nextPegIndex;
+            //potential for next peg index to be numPegs when 0 is desired. correct here so previous angle check still works
+            return nextPegIndex % this.numPegs;
         }
     }
 
@@ -385,7 +386,6 @@ class StringBoard
 
     updatePreRender(canvas, context)
     {
-        console.log("update pre render");
         context.clearRect(-canvasCentreOffset.x, -canvasCentreOffset.y, canvasRes, canvasRes);
 
         //draw pegs
